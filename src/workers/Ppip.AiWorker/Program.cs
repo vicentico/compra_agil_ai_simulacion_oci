@@ -2,13 +2,16 @@ using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Ppip.AiWorker;
 using Ppip.BuildingBlocks.Health;
+using Ppip.BuildingBlocks.Observability;
 
 // ============================================================================
 // Ppip.AiWorker — esqueleto FASE 1. ILlmProvider/IEmbeddingProvider reales
-// en FASE 9-10 (ADR-007).
+// en FASE 9-10 (ADR-007). Observabilidad (OTel, correlationId) cableada en
+// FASE 2.
 // ============================================================================
 
 var builder = WebApplication.CreateBuilder(args);
+builder.AddPpipObservability("ppip-ai-worker");
 var config = builder.Configuration;
 var mongoConnectionString = config["Ppip:Mongo:ConnectionString"] ?? string.Empty;
 var rabbitHost = config["Ppip:RabbitMq:Host"] ?? string.Empty;
@@ -24,18 +27,13 @@ builder.Services.AddHealthChecks()
     .AddCheck("self", () => HealthCheckResult.Healthy(), tags: ["live"])
     .AddCheck("mongodb", new MongoPingHealthCheck(mongoConnectionString), tags: ["ready"])
     .AddCheck("rabbitmq", new RabbitMqHealthCheck(rabbitHost, rabbitUser, rabbitPassword), tags: ["ready"])
-    .AddCheck(
-        "qdrant",
-        sp => new HttpEndpointHealthCheck(
-            sp.GetRequiredService<IHttpClientFactory>(), "Qdrant", $"{qdrantEndpoint}/healthz"),
-        tags: ["ready"])
-    .AddCheck(
-        "ollama",
-        sp => new HttpEndpointHealthCheck(
-            sp.GetRequiredService<IHttpClientFactory>(), "Ollama", $"{ollamaEndpoint}/api/tags"),
-        tags: ["ready"]);
+    .AddTypeActivatedCheck<HttpEndpointHealthCheck>(
+        "qdrant", failureStatus: null, tags: ["ready"], args: ["Qdrant", $"{qdrantEndpoint}/healthz"])
+    .AddTypeActivatedCheck<HttpEndpointHealthCheck>(
+        "ollama", failureStatus: null, tags: ["ready"], args: ["Ollama", $"{ollamaEndpoint}/api/tags"]);
 
 var app = builder.Build();
+app.UseCorrelationId();
 var jsonWriter = new HealthCheckJsonWriter();
 
 app.MapHealthChecks("/health", new HealthCheckOptions

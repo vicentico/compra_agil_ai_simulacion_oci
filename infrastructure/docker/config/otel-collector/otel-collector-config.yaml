@@ -1,0 +1,57 @@
+# ==========================================================================
+# OTel Collector — punto único de ingesta OTLP (ADR-011).
+# Los 4 servicios .NET exportan aquí (Ppip:Otel:Endpoint); el Collector
+# reparte a Prometheus (métricas, scrape), Loki (logs) y Tempo (traces).
+# Desacopla los servicios de los backends: migrar a OCI APM/Logging/Monitoring
+# es cambiar exporters de este archivo, no re-instrumentar código.
+# ==========================================================================
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+processors:
+  batch: {}
+  # Evita OOM del Collector si algún servicio entra en loop de errores y
+  # satura la ingesta (defensa en profundidad, análogo a NFR-006).
+  memory_limiter:
+    check_interval: 5s
+    limit_mib: 300
+    spike_limit_mib: 100
+
+exporters:
+  # Prometheus scrapea este exporter (pull) — ver prometheus.yml.
+  prometheus:
+    endpoint: 0.0.0.0:8889
+  loki:
+    endpoint: http://loki:3100/loki/api/v1/push
+    # "job" queda en http_server_request_duration_seconds{job=...} (Prometheus)
+    # y en {job=...} (Loki) con el mismo valor (service.name) — permite
+    # correlacionar logs y métricas del mismo servicio en Grafana.
+    default_labels_enabled:
+      exporter: true
+      job: true
+  otlp/tempo:
+    endpoint: tempo:4317
+    tls:
+      insecure: true
+  debug:
+    verbosity: basic
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [memory_limiter, batch]
+      exporters: [otlp/tempo, debug]
+    metrics:
+      receivers: [otlp]
+      processors: [memory_limiter, batch]
+      exporters: [prometheus, debug]
+    logs:
+      receivers: [otlp]
+      processors: [memory_limiter, batch]
+      exporters: [loki, debug]

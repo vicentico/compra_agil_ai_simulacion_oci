@@ -10,9 +10,11 @@ flowchart LR
     Servicios -->|OTLP: traces+metrics+logs| COL[OTel Collector]
     COL --> PROM[Prometheus]
     COL --> LOKI[Loki]
-    COL --> TEMPO[Tempo/Jaeger - traces]
+    COL --> TEMPO[Tempo - traces]
     PROM & LOKI & TEMPO --> GRAF[Grafana dashboards + alertas]
 ```
+
+Implementación FASE 2: `infrastructure/docker/docker-compose.yml` (perfil `obs`) + `infrastructure/docker/config/{otel-collector,prometheus,loki,tempo,grafana}/`. Backend de traces: Tempo (ADR-011 Amendment 2026-08-16).
 
 ## Convenciones
 

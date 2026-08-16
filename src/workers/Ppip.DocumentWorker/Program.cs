@@ -1,13 +1,16 @@
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Ppip.BuildingBlocks.Health;
+using Ppip.BuildingBlocks.Observability;
 using Ppip.DocumentWorker;
 
 // ============================================================================
 // Ppip.DocumentWorker — esqueleto FASE 1. Pipeline real en FASE 7-9.
+// Observabilidad (OTel, correlationId) cableada en FASE 2.
 // ============================================================================
 
 var builder = WebApplication.CreateBuilder(args);
+builder.AddPpipObservability("ppip-document-worker");
 var config = builder.Configuration;
 var mongoConnectionString = config["Ppip:Mongo:ConnectionString"] ?? string.Empty;
 var rabbitHost = config["Ppip:RabbitMq:Host"] ?? string.Empty;
@@ -23,18 +26,13 @@ builder.Services.AddHealthChecks()
     .AddCheck("self", () => HealthCheckResult.Healthy(), tags: ["live"])
     .AddCheck("mongodb", new MongoPingHealthCheck(mongoConnectionString), tags: ["ready"])
     .AddCheck("rabbitmq", new RabbitMqHealthCheck(rabbitHost, rabbitUser, rabbitPassword), tags: ["ready"])
-    .AddCheck(
-        "minio",
-        sp => new HttpEndpointHealthCheck(
-            sp.GetRequiredService<IHttpClientFactory>(), "MinIO", $"{minioEndpoint}/minio/health/live"),
-        tags: ["ready"])
-    .AddCheck(
-        "qdrant",
-        sp => new HttpEndpointHealthCheck(
-            sp.GetRequiredService<IHttpClientFactory>(), "Qdrant", $"{qdrantEndpoint}/healthz"),
-        tags: ["ready"]);
+    .AddTypeActivatedCheck<HttpEndpointHealthCheck>(
+        "minio", failureStatus: null, tags: ["ready"], args: ["MinIO", $"{minioEndpoint}/minio/health/live"])
+    .AddTypeActivatedCheck<HttpEndpointHealthCheck>(
+        "qdrant", failureStatus: null, tags: ["ready"], args: ["Qdrant", $"{qdrantEndpoint}/healthz"]);
 
 var app = builder.Build();
+app.UseCorrelationId();
 var jsonWriter = new HealthCheckJsonWriter();
 
 app.MapHealthChecks("/health", new HealthCheckOptions

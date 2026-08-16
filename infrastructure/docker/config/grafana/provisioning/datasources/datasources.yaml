@@ -1,0 +1,49 @@
+# ==========================================================================
+# Datasources provisionados: Prometheus, Loki, Tempo — correlacionados entre
+# sí (traceId en logs → trace en Tempo; trace → métricas del servicio) para
+# cumplir la convención de correlación de docs/13-observability/01.
+# ==========================================================================
+apiVersion: 1
+
+datasources:
+  - name: Prometheus
+    uid: ppip-prometheus
+    type: prometheus
+    access: proxy
+    url: http://prometheus:9090
+    isDefault: true
+    editable: false
+
+  - name: Loki
+    uid: ppip-loki
+    type: loki
+    access: proxy
+    url: http://loki:3100
+    editable: false
+    jsonData:
+      derivedFields:
+        - datasourceUid: ppip-tempo
+          matcherRegex: '"?traceId"?[=:]\s*"?([0-9a-f]+)"?'
+          name: TraceID
+          # $$ (no $): Grafana expande $VAR/${VAR} como variables de entorno al
+          # leer YAML de provisioning — "$$" es su forma de escapar un "$"
+          # literal. Sin esto, el value real ("${__value.raw}", el template
+          # que usa el frontend de Grafana para el link) queda vacío.
+          url: '$${__value.raw}'
+
+  - name: Tempo
+    uid: ppip-tempo
+    type: tempo
+    access: proxy
+    url: http://tempo:3200
+    editable: false
+    jsonData:
+      tracesToLogsV2:
+        datasourceUid: ppip-loki
+        spanStartTimeShift: -5m
+        spanEndTimeShift: 5m
+        filterByTraceID: true
+      tracesToMetrics:
+        datasourceUid: ppip-prometheus
+      serviceMap:
+        datasourceUid: ppip-prometheus

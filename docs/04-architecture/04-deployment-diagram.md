@@ -28,6 +28,7 @@ flowchart TB
             PROM[prometheus + volumen]
             GRAF[grafana + volumen]
             LOKI[loki + volumen]
+            TEMPO[tempo + volumen]
         end
     end
     TR --> SPA & API & KC & GRAF
@@ -36,6 +37,8 @@ flowchart TB
     API --> MIO & QD & PG
     AIW --> QD & OLL
     API & SW & DW & AIW -.OTLP.-> OTL
+    OTL --> PROM & LOKI & TEMPO
+    GRAF --> PROM & LOKI & TEMPO
 ```
 
 ## Convenciones

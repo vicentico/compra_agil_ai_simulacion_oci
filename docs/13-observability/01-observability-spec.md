@@ -23,3 +23,12 @@ Checkpoint sin avanzar > X horas · DLQ no vacía · tasa de fallo de etapa > um
 
 ## Health checks
 `/health` (liveness), `/ready` (Mongo, RabbitMQ, Redis; MinIO/Qdrant donde aplique), `/live`. Dependencias externas (ChileCompra, LLM, OCR) se reportan como `degraded`, nunca tumban readiness (NFR-006). SLIs/SLOs: post-baseline FASE 18.
+
+## Estado de implementación (FASE 2, 2026-08-16)
+
+**Implementado:** OTel (traces+métricas+logs) en los 4 servicios .NET vía `Ppip.BuildingBlocks.Observability`, exportado OTLP al Collector (`infrastructure/docker/config/otel-collector/`) → Prometheus/Loki/Tempo (ADR-011 Amendment: Tempo). Middleware de `correlationId` (`X-Correlation-Id`) por servicio: acepta/genera/devuelve, tag de span, scope de logging. Dashboard base `PPIP - Service Overview` (request rate, p95, error rate, volumen de logs, logs recientes) provisionado en Grafana. Endpoint de diagnóstico `GET /api/diagnostics/trace-check` en Platform API que fuerza una llamada real a los 3 workers para demostrar el trace end-to-end + correlationId propagado (criterio de éxito de FASE 2, `docs/ROADMAP.md`).
+
+**Deliberadamente diferido (recorte explícito, no omisión oculta):**
+- Los 4 dashboards de negocio (Sync health, Document pipeline, AI cost & latency, RAG quality) se crean en las fases que producen las métricas `ppip_*` que visualizan (FASE 6, 8, 9-10) — construirlos ahora requeriría datos ficticios, prohibido por las reglas de IA/datos de este proyecto.
+- Las alertas iniciales listadas arriba dependen en su mayoría de esas mismas métricas de negocio inexistentes todavía (checkpoint, DLQ, presupuesto IA); se definen junto a sus fases. Única excepción evaluada — "servicio unhealthy > 5 min" — también se difiere: requeriría scrapear `/health` de cada servicio directamente con Prometheus (duplicando la vía OTLP ya establecida) solo para esa alerta; se revisita si en una fase posterior ya existe esa señal por otro camino.
+- Propagación de `correlationId` en headers de mensajes RabbitMQ: no aplica todavía porque ningún worker publica/consume eventos reales (son heartbeats placeholder de FASE 1); se implementa junto al primer productor/consumidor real (FASE 6, `docs/07-events/`).

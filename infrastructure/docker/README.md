@@ -1,6 +1,6 @@
-# infrastructure/docker — FASE 1: Docker infrastructure
+# infrastructure/docker — FASE 1: Docker infrastructure · FASE 2: Observability
 
-Implementa `docs/04-architecture/04-deployment-diagram.md`. Levanta la infraestructura base (perfil `core`) y los esqueletos de aplicación (perfil `app`) definidos en el Container Diagram.
+Implementa `docs/04-architecture/04-deployment-diagram.md`. Levanta la infraestructura base (perfil `core`), los esqueletos de aplicación (perfil `app`) y, opcionalmente, el stack de observabilidad (perfil `obs`) definidos en el Container Diagram.
 
 ## Uso rápido
 
@@ -10,6 +10,8 @@ cp infrastructure/docker/.env.example infrastructure/docker/.env
 make up          # perfiles core + app
 make ps          # estado de salud de cada contenedor
 make smoke        # scripts/smoke-test.sh: falla si algo no está healthy
+make up-obs      # perfil obs (independiente): OTel Collector, Prometheus, Loki, Tempo, Grafana
+make smoke-obs   # ídem para el perfil obs
 make logs SERVICE=platform-api
 make down
 ```
@@ -19,9 +21,19 @@ Rutas vía Traefik (resolución automática de `*.localhost`, RFC 6761 — no re
 | URL | Servicio |
 |---|---|
 | http://ppip.localhost | Frontend Angular |
-| http://api.ppip.localhost | Platform API (`/health`, `/ready`) |
+| http://api.ppip.localhost | Platform API (`/health`, `/ready`, `/api/diagnostics/trace-check`) |
 | http://auth.ppip.localhost | Keycloak |
+| http://grafana.ppip.localhost | Grafana (perfil `obs`) — dashboard `PPIP - Service Overview` provisionado |
 | http://localhost:8080 | Dashboard de Traefik (solo dev, inseguro — ver `docker-compose.override.yml`) |
+| http://localhost:9090, :3100, :3200 | Prometheus, Loki, Tempo (solo dev, expuestos por `docker-compose.override.yml`) |
+
+## Observabilidad (perfil `obs`, FASE 2)
+
+Los 4 servicios .NET exportan traces+métricas+logs vía OTLP al Collector (`Ppip__Otel__Endpoint`); el Collector reparte a Prometheus (scrape), Loki y Tempo. **No es una dependencia dura**: `core`/`app` arrancan y sirven tráfico igual si `obs` no está activo (los exporters OTLP fallan en silencio en background, sin bloquear el arranque).
+
+Para verificar el trace end-to-end (criterio de éxito de FASE 2): `curl http://api.ppip.localhost/api/diagnostics/trace-check` — llama a los 3 workers, y el `correlationId`/`traceId` devueltos deben aparecer correlacionados en Grafana (panel "Logs recientes" del dashboard, y en Tempo vía "Explore" buscando ese traceId).
+
+**otel-collector no tiene `HEALTHCHECK` de Docker** — su imagen (`otel/opentelemetry-collector-contrib`) es distroless (sin `sh`/`wget`/`curl`), no hay binario invocable para un `CMD`. Se verifica indirectamente: si Prometheus/Loki/Tempo reciben datos, el Collector está sano. `make smoke-obs` lo excluye explícitamente del chequeo de salud (no lo ignora en silencio).
 
 ## Decisiones y límites explícitos de esta fase (transparencia de trade-offs)
 

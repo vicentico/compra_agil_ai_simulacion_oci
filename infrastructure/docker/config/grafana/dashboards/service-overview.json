@@ -1,0 +1,86 @@
+{
+  "uid": "ppip-service-overview",
+  "title": "PPIP - Service Overview (FASE 2)",
+  "description": "Dashboard base de FASE 2 (Observability foundation). Los 4 dashboards de negocio (Sync health, Document pipeline, AI cost & latency, RAG quality) se crean en sus fases correspondientes (6, 8, 9-10) cuando existan las metricas ppip_* que visualizan — ver docs/13-observability/01-observability-spec.md y docs/ROADMAP.md.",
+  "tags": ["ppip", "fase-2", "observability"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "10s",
+  "time": { "from": "now-1h", "to": "now" },
+  "panels": [
+    {
+      "id": 1,
+      "title": "Request rate por servicio",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "ppip-prometheus" },
+      "gridPos": { "x": 0, "y": 0, "w": 12, "h": 8 },
+      "fieldConfig": { "defaults": { "unit": "reqps" }, "overrides": [] },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "ppip-prometheus" },
+          "expr": "sum(rate(http_server_request_duration_seconds_count[$__rate_interval])) by (job)",
+          "legendFormat": "{{job}}"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "Latencia p95 por servicio",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "ppip-prometheus" },
+      "gridPos": { "x": 12, "y": 0, "w": 12, "h": 8 },
+      "fieldConfig": { "defaults": { "unit": "s" }, "overrides": [] },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "ppip-prometheus" },
+          "expr": "histogram_quantile(0.95, sum(rate(http_server_request_duration_seconds_bucket[$__rate_interval])) by (le, job))",
+          "legendFormat": "{{job}}"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "Tasa de error 5xx por servicio",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "ppip-prometheus" },
+      "gridPos": { "x": 0, "y": 8, "w": 12, "h": 8 },
+      "fieldConfig": { "defaults": { "unit": "reqps" }, "overrides": [] },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "ppip-prometheus" },
+          "expr": "sum(rate(http_server_request_duration_seconds_count{http_response_status_code=~\"5..\"}[$__rate_interval])) by (job)",
+          "legendFormat": "{{job}}"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "title": "Volumen de logs por servicio",
+      "type": "timeseries",
+      "datasource": { "type": "loki", "uid": "ppip-loki" },
+      "gridPos": { "x": 12, "y": 8, "w": 12, "h": 8 },
+      "targets": [
+        {
+          "datasource": { "type": "loki", "uid": "ppip-loki" },
+          "expr": "sum(count_over_time({job=~\".+\"}[$__interval])) by (job)",
+          "legendFormat": "{{job}}"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "title": "Logs recientes (todos los servicios)",
+      "type": "logs",
+      "datasource": { "type": "loki", "uid": "ppip-loki" },
+      "gridPos": { "x": 0, "y": 16, "w": 24, "h": 9 },
+      "options": { "showTime": true, "wrapLogMessage": true, "enableLogDetails": true },
+      "targets": [
+        {
+          "datasource": { "type": "loki", "uid": "ppip-loki" },
+          "expr": "{job=~\".+\"}"
+        }
+      ]
+    }
+  ]
+}

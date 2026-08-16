@@ -7,7 +7,7 @@
 | Rol que se traspasa | Tech Lead / Arquitecto del proyecto (agente IA con supervisión del usuario) |
 | Ubicación del repositorio | `C:\ClaudeCowork\Agente_Compras_Agiles` (raíz del repo = carpeta del proyecto) |
 | Sesión de origen | Claude Cowork, modelo configurado `claude-fable-5` |
-| Estado global | **FASE 0 aprobada** · **FASE 1 (Docker infrastructure) implementada** (2026-08-16). Primer código del repo: infraestructura + esqueletos ejecutables. |
+| Estado global | **FASE 0 aprobada · FASE 1 (Docker infrastructure) implementada · FASE 2 (Observability foundation) implementada y validada end-to-end** (2026-08-16). Próxima: FASE 3 — Identity & security. |
 | Documentos rectores | `Master Prompt — OCI Local Simulator...md` (QUÉ construir) + MASTER PROMPT 2 (CÓMO construirlo — entregado por chat, ver §3.6 de este documento) |
 
 > **Instrucción para el asistente entrante:** lee este documento completo, luego `README.md`, `docs/ROADMAP.md` y `docs/architecture-review-package.md`. Con eso puedes asumir el rol sin preguntas repetitivas. Ante cualquier duda de detalle, la respuesta está en `docs/` — este proyecto se rige por el principio "el sistema debe comprenderse desde docs/ sin leer el código".
@@ -42,7 +42,7 @@ Procurement (sync/consulta/matching, ACL frente a ChileCompra) · Document Intel
 | Identidad | Keycloak OIDC (SPA: Code+PKCE), JWT, RBAC `viewer<analyst<editor<admin<superadmin` (ADR-010 + amendment) |
 | IA | Puertos propios `ILlmProvider`/`IEmbeddingProvider` (ADR-007): Ollama default local, OpenAI/Gemini opcionales; `IOcrService` (ADR-006): Tesseract default, Mock para tests, OCI Document Understanding futuro |
 | Edge | Traefik (ADR-009): TLS, rate limiting, labels de Compose |
-| Observabilidad | OTel Collector → Prometheus + Loki + traces (Tempo/Jaeger a decidir en FASE 2) → Grafana (ADR-011) |
+| Observabilidad | OTel Collector → Prometheus + Loki + Tempo (ADR-011 + Amendment: Tempo sobre Jaeger) → Grafana, correlacionados (traceId↔logs↔métricas) |
 | Infra | Docker Compose con perfiles `core/app/obs/demo`, redes segmentadas edge/app/data/obs, health checks encadenados |
 
 ### 2.4 Patrones de diseño obligatorios
@@ -122,7 +122,15 @@ C:\ClaudeCowork\Agente_Compras_Agiles\
 │   ├── 17-oci-migration/         ← estrategia por componente en 10 pasos
 │   └── 18-traceability/          ← matriz FR→UC→componente→API/evento→código→test→doc
 ├── prompts/  (system/analysis/requirements/rag/proposal/compliance — README, se pobla en F9-10)
-├── evaluation/ infrastructure/ scripts/ src/ tests/   ← stubs con README; se implementan por fase
+├── evaluation/ scripts/                              ← stubs con README; se implementan por fase
+├── infrastructure/docker/            ← FASE 1+2: compose (perfiles core/app/obs/demo) + config/
+│   └── config/{otel-collector,prometheus,loki,tempo,grafana}/  ← FASE 2
+├── src/
+│   ├── building-blocks/Ppip.BuildingBlocks.Health/          ← FASE 1
+│   ├── building-blocks/Ppip.BuildingBlocks.Observability/   ← FASE 2 (OTel + CorrelationId)
+│   ├── services/Ppip.PlatformApi/, workers/Ppip.{Sync,Document,Ai}Worker/  ← FASE 1, instrumentados en FASE 2
+│   └── apps/frontend/                ← FASE 1 (Angular 20.3)
+├── tests/Ppip.BuildingBlocks.Observability.Tests/  ← FASE 2, xUnit (4 tests, CorrelationIdMiddleware)
 └── _to_delete/                   ← tar.gz de entregas pasadas; el usuario puede borrarlo
 ```
 
@@ -132,17 +140,20 @@ C:\ClaudeCowork\Agente_Compras_Agiles\
 1. **FASE 0 — Architecture & Specification Bootstrap: COMPLETA Y APROBADA** (gate 2026-08-16, registrado en `docs/architecture-review-package.md`). 0 enlaces rotos, IDs consistentes.
 2. **Cambio 1 «Propuesta de Plataforma» integrado (SHOULD):** HITL en extracción documental (FR-053/054, UC-003 A6), rubros por LLM + auditoría (FR-055/056, UC-010), dashboard de matching (FR-057, UC-011), export .docx (FR-058).
 3. **Cambio 2 «Mejoras Evolutivas» integrado (SHOULD):** outcomes + dashboard de efectividad (FR-059/060, UC-012), score de ganabilidad heurístico (FR-061; ML = FUTURE FR-062), monitoreo proactivo + notificaciones (FR-063/064, UC-013), throttling dinámico + rol superadmin (FR-065/066, UC-014, NFR-021).
-4. **FASE 1 — Docker infrastructure: IMPLEMENTADA (2026-08-16).** `infrastructure/docker/docker-compose.yml` (14 servicios, perfiles core/app/demo, redes edge/app/data/obs-reservada) + override de dev; esqueletos .NET 10 `Ppip.PlatformApi`/`Ppip.SyncWorker`/`Ppip.DocumentWorker`/`Ppip.AiWorker` con `/health`+`/ready` (dependencias reales); `Ppip.BuildingBlocks.Health` compartido; frontend Angular 20.3 (CLI oficial, build+3 tests en verde); `Makefile` + `scripts/smoke-test.sh`. **Validado:** `docker compose config`, XML/C# estático, `ng build`/`ng test` reales. **NO validado** (el entorno que lo generó no tenía acceso a Docker Hub ni SDK .NET instalado): build real de las 5 imágenes y arranque end-to-end — primera acción al retomar con Docker/SDK reales: `make up && make smoke`. Deliberadamente fuera de esta fase: stack de observabilidad (es FASE 2), seeding real (placeholder que falla explícito), usuarios Mongo de mínimo privilegio (FASE 4+). Detalle: `docs/ROADMAP.md` (nota de cierre) e `infrastructure/docker/README.md`.
+4. **FASE 1 — Docker infrastructure: IMPLEMENTADA (2026-08-16).** `infrastructure/docker/docker-compose.yml` (perfiles core/app/obs/demo, redes edge/app/data/obs) + override de dev; esqueletos .NET 10 `Ppip.PlatformApi`/`Ppip.SyncWorker`/`Ppip.DocumentWorker`/`Ppip.AiWorker` con `/health`+`/ready` (dependencias reales); `Ppip.BuildingBlocks.Health` compartido; frontend Angular 20.3 (CLI oficial, build+3 tests en verde); `Makefile` + `scripts/smoke-test.sh`. Deliberadamente fuera de esta fase: seeding real (placeholder que falla explícito), usuarios Mongo de mínimo privilegio (FASE 4+).
+5. **FASE 2 — Observability foundation: IMPLEMENTADA Y VALIDADA END-TO-END (2026-08-16).** Perfil `obs` (OTel Collector, Prometheus, Loki, Tempo, Grafana); `Ppip.BuildingBlocks.Observability` (OTel traces+métricas+logs vía OTLP, `CorrelationIdMiddleware`+`CorrelationIdDelegatingHandler`) referenciado desde los 4 servicios; endpoint temporal `GET /api/diagnostics/trace-check` en Platform API; dashboard `PPIP - Service Overview` (5 paneles) provisionado en Grafana; Tempo elegido sobre Jaeger (ADR-011 Amendment); 4 tests xUnit para `CorrelationIdMiddleware`. **Este entorno sí tenía Docker Desktop + .NET 10 SDK reales** (a diferencia del que generó FASE 1) y se usó para validar de punta a punta: `docker compose up -d` con los 3 perfiles, `/api/diagnostics/trace-check` devolvió 200, el mismo `traceId` apareció con 7 spans en Tempo y el mismo `traceId`+`correlationId` en los logs de Loki, Prometheus mostró métricas separadas por servicio, Grafana provisionó datasources+dashboard correctamente. Deliberadamente fuera de esta fase: los 4 dashboards de negocio y las alertas iniciales (dependen de métricas `ppip_*` inexistentes hasta sus fases), correlationId en eventos RabbitMQ (ningún worker publica eventos reales todavía).
 
-Prompts, lógica de dominio real y `docker-compose` de observabilidad **todavía no existen** — eso es FASE 2+.
+**Bugs pre-existentes de FASE 1 encontrados y corregidos al validar con herramientas reales (ver `docs/ROADMAP.md` para el detalle completo de los 6):** `Ppip.BuildingBlocks.Health` sin `FrameworkReference` a ASP.NET Core; 3 registros `AddCheck` con una sobrecarga inexistente (→ `AddTypeActivatedCheck`); los 4 Dockerfiles no copiaban `Directory.Build.props`/`global.json` (`TargetFramework` vacío) y creaban un usuario con UID que colisiona con el `app`/`$APP_UID` que ya trae la imagen base; `Makefile`/`smoke-test.sh` nunca cargaban `docker-compose.override.yml` (puertos de dev nunca se publicaban); Prometheus sin `honor_labels: true` (colisión de la label `job`); provisioning de Grafana sin escapar `$` (`${__value.raw}` se guardaba vacío). Ninguno era parte del alcance nuevo de FASE 2, pero todos bloqueaban validar cualquier cosa — corregidos como prerrequisito.
+
+Prompts y lógica de dominio real **todavía no existen** — eso es FASE 4+.
 
 ### 5.2 Decisiones del usuario ya tomadas (no volver a preguntar)
 Idioma docs: español · repo en la raíz de la carpeta · cambios 1 y 2 como SHOULD · gate FASE 0→1 aprobado · recomendador heurístico ahora, ML después · outcomes manuales + API si el spike la confirma · notificaciones in-app + email digest (MailHog local).
 
-### 5.3 Las 3 tareas inmediatas
-1. **Verificar FASE 1 en un entorno con Docker Desktop + .NET 10 SDK reales:** `cp infrastructure/docker/.env.example infrastructure/docker/.env`, `make up`, `make smoke`. Corregir lo que la validación estática (hecha en un sandbox sin acceso a Docker Hub) no pudo anticipar.
-2. **FASE 2 — Observability foundation:** OTel en los 4 servicios esqueleto, Collector → Prometheus/Loki/traces (decidir Tempo vs Jaeger — ADR menor pendiente), Grafana con dashboards base, propagación traceId+correlationId demostrada end-to-end. Guía: `docs/13-observability/01-observability-spec.md`.
-3. **FASE 3 — Identity & security:** realm Keycloak `ppip`, 5 roles, JWT en Platform API, matriz RBAC con tests de autorización, secretos vía Docker secrets/.env, rate limiting en Traefik.
+### 5.3 La tarea inmediata
+**FASE 3 — Identity & security:** realm Keycloak `ppip`, 5 roles, JWT en Platform API, matriz RBAC con tests de autorización, secretos vía Docker secrets/.env, rate limiting en Traefik.
+
+Nota operativa para retomar el stack: `make up && make up-obs && make smoke && make smoke-obs`. Traefik puede fallar a bindear el puerto 80 si el host ya lo tiene ocupado (pasó en la sesión de FASE 2, por otro proceso ajeno al proyecto) — no es un bug del compose; en ese caso los servicios de app siguen accesibles vía `docker exec <container> curl http://localhost:8080/...` o publicando temporalmente otro puerto.
 
 En paralelo (preparación de FASE 5, puede adelantarse): conseguir el ticket/API key de ChileCompra y ejecutar el **spike** que cierra OQ-01 (contrato real y paginación), OQ-02 (descarga de adjuntos), OQ-10 (¿expone adjudicaciones/OC?) y valida ASM-01/ASM-08 (términos de uso).
 

@@ -1,13 +1,16 @@
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Ppip.BuildingBlocks.Health;
+using Ppip.BuildingBlocks.Observability;
 using Ppip.SyncWorker;
 
 // ============================================================================
 // Ppip.SyncWorker — esqueleto FASE 1. Lógica real de UC-001 en FASE 5-6.
+// Observabilidad (OTel, correlationId) cableada en FASE 2.
 // ============================================================================
 
 var builder = WebApplication.CreateBuilder(args);
+builder.AddPpipObservability("ppip-sync-worker");
 var config = builder.Configuration;
 var mongoConnectionString = config["Ppip:Mongo:ConnectionString"] ?? string.Empty;
 var rabbitHost = config["Ppip:RabbitMq:Host"] ?? string.Empty;
@@ -22,6 +25,7 @@ builder.Services.AddHealthChecks()
     .AddCheck("rabbitmq", new RabbitMqHealthCheck(rabbitHost, rabbitUser, rabbitPassword), tags: ["ready"]);
 
 var app = builder.Build();
+app.UseCorrelationId();
 var jsonWriter = new HealthCheckJsonWriter();
 
 app.MapHealthChecks("/health", new HealthCheckOptions

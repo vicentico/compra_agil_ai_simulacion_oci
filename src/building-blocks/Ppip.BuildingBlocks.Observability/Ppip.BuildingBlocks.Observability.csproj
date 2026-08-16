@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>Ppip.BuildingBlocks.Observability</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- Versión flotante intencional para el esqueleto de FASE 2 (mismo criterio
+         que Ppip.BuildingBlocks.Health): se fija versión exacta vía Central
+         Package Management cuando exista un pipeline de build real (FASE 4+). -->
+    <PackageReference Include="OpenTelemetry.Extensions.Hosting" Version="1.*" />
+    <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.*" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.*" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.Http" Version="1.*" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.Runtime" Version="1.*" />
+  </ItemGroup>
+</Project>
