@@ -30,3 +30,11 @@
 | **Demo Mode** | Modo de operación con datos ficticios que demuestra el pipeline completo sin API externa. |
 | **OCI** | Oracle Cloud Infrastructure; destino conceptual de migración del sistema. |
 | **UTM** | Unidad Tributaria Mensual, unidad de cuenta chilena usada para umbrales de compra. |
+| **Rubro** | Categoría de negocio/actividad económica del proveedor; inferida por LLM desde la descripción del negocio y confirmada por el usuario; base del matching de oportunidades. |
+| **Matching de oportunidades** | Cruce entre Compras Ágiles sincronizadas y los rubros confirmados del CompanyProfile, con score y explicación de coincidencia. |
+| **Tarea de revisión (HITL)** | Tarea generada cuando la extracción de un documento es deficiente; el usuario valida el texto o carga el documento manualmente y el pipeline se reanuda. |
+| **Win-rate** | Tasa de adjudicación: propuestas adjudicadas / propuestas presentadas en un período. Métrica central del dashboard de efectividad. |
+| **Score de ganabilidad** | Puntaje heurístico y explicable (reglas ponderadas configurables) que estima el atractivo de una oportunidad para el perfil; ordena el panel, nunca oculta oportunidades. |
+| **Outcome de propuesta** | Resultado registrado de una propuesta: presentada, adjudicada, no adjudicada, desierta o descartada. |
+| **Throttling** | Control del ritmo de peticiones salientes hacia la API externa (req/min, req/hora, concurrencia) para no exceder las cuotas del proveedor. |
+| **Digest** | Notificación resumida y agrupada por período que destaca solo oportunidades de alto potencial. |

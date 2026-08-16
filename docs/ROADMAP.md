@@ -4,7 +4,7 @@ Orden según MASTER PROMPT 2 §35. Cada fase cumple el Definition of Done (MP2 �
 
 | Fase | Contenido | Entregable verificable | Estado |
 |---|---|---|---|
-| **0** | Repository + documentation foundation (este bootstrap) | docs/ completa + Architecture Review Package aprobado | ✅ Hecha (pendiente revisión humana) |
+| **0** | Repository + documentation foundation (este bootstrap) | docs/ completa + Architecture Review Package aprobado | ✅ Aprobada (gate 2026-08-16, incluye cambio «Propuesta de Plataforma» como SHOULD) |
 | **1** | Docker infrastructure: compose con MongoDB, RabbitMQ, MinIO, Redis, Qdrant, Keycloak, Ollama, Traefik + esqueletos .NET 10 / Angular 20 | `docker compose up -d` todo healthy | Pendiente |
 | **2** | Observability foundation: OTel en esqueletos, Collector, Prometheus, Grafana, Loki, dashboards base | Trace end-to-end visible de un request de prueba | Pendiente |
 | **3** | Identity & security: realm Keycloak, JWT en API, RBAC, secretos, rate limiting | AuthZ matrix tests verdes | Pendiente |
@@ -24,6 +24,23 @@ Orden según MASTER PROMPT 2 §35. Cada fase cumple el Definition of Done (MP2 �
 | **17** | End-to-end validation: e2e Playwright + demo mode pulido | Pipeline demo verde en CI | Pendiente |
 | **18** | Performance & resilience: baseline k6, fault injection F1-F16, SLOs | Informe de baseline + resiliencia | Pendiente |
 | **19** | OCI migration simulation: arquitectura objetivo, IaC esqueleto, gap analysis | Paquete de migración revisable | Pendiente |
+
+## Asignación de funcionalidades SHOULD (Propuesta de Plataforma, 2026-08-16)
+
+Se implementan en su fase natural **solo si el núcleo MUST de esa fase está estable**; si no, se difieren explícitamente (nunca recorte silencioso):
+
+| FR | Funcionalidad | Fase objetivo |
+|---|---|---|
+| FR-053/054 | Human-in-the-Loop de extracción (tareas de revisión + carga manual) | FASE 8 (document intelligence) |
+| FR-055/056 | Inferencia de rubros por LLM + auditoría del usuario | FASE 12 (company profile) |
+| FR-057 | Dashboard de oportunidades por matching de rubros | FASE 12 (matching) + FASE 16 (UI) — depende de OQ-09 (taxonomía, spike FASE 5) |
+| FR-058 | Export de propuesta a .docx editable | FASE 13 (proposal management) |
+| FR-059/060 | Outcomes de propuestas + dashboard de efectividad | FASE 13 (outcome) + FASE 16 (dashboard) |
+| FR-061 | Score de ganabilidad heurístico explicable | FASE 12 (junto al matching) + FASE 16 (UI) |
+| FR-063/064 | Monitoreo proactivo + notificaciones (in-app + email digest) | FASE 6 (detección post-sync) + FASE 16 (centro de notificaciones y SMTP/MailHog) |
+| FR-065/066 | Throttling dinámico + rol superadmin y panel de cuotas | FASE 5 (rate limiter dinámico en el client) + FASE 3 (rol) + FASE 16 (panel) |
+
+FUTURE explícito: FR-062 (recalibración ML del score) — se especificará cuando exista volumen real de outcomes (RSK-14).
 
 ## Gates
 

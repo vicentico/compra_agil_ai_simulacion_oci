@@ -16,3 +16,6 @@ Escala: Probabilidad (P) y Severidad (S) en Baja/Media/Alta.
 | RSK-10 | Dependencia de un único desarrollador/entorno local | M | M | Documentación como producto; docker compose reproducible; seed y demo mode | Operaciones |
 | RSK-11 | Datos derivados (Qdrant) desincronizados de la fuente (MongoDB/MinIO) | M | M | Índices reconstruibles; jobs de reconciliación; hash por chunk | Knowledge |
 | RSK-12 | El alcance MUST es demasiado grande para el POC | M | A | Roadmap incremental con gates; recorte consciente vía MoSCoW, nunca silencioso | Producto |
+| RSK-13 | Rubros mal inferidos por el LLM producen matching pobre (oportunidades perdidas o ruido) | M | M | Confirmación humana obligatoria (FR-056); matching explicable; evaluación de inferencia con dataset; mapeo a taxonomía oficial (OQ-09) | AI Governance |
+| RSK-14 | Cold start del score de ganabilidad: sin outcomes históricos el score puede ser engañoso y minar confianza | A | M | Versión heurística explicable con descomposición visible (FR-061); ML diferido a FUTURE (FR-062); pesos ajustables por admin; el score ordena, nunca oculta oportunidades | Producto |
+| RSK-15 | Fatiga de notificaciones: exceso de alertas hace que el usuario las ignore | M | M | Curado por umbral de score, digest agrupado, preferencias por usuario y opt-out (FR-064); métricas de engagement | Producto |

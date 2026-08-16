@@ -31,12 +31,18 @@ Toda API se especifica en OpenAPI **antes** de implementarse (spec por módulo e
 | GET | /api/compra-agil/{id}/requirements | Requisitos + evidencia | viewer |
 | GET | /api/compra-agil/{id}/trace | Cadena de trazabilidad | analyst |
 | GET | /api/dashboard/metrics | Agregados del dashboard | viewer |
+| GET | /api/opportunities | Compras coincidentes con rubros confirmados, ordenadas por score de ganabilidad (descomposición incluida) | viewer |
+| GET | /api/effectiveness/metrics | Telemetría de negocio: win-rate, montos, costo IA por propuesta | viewer |
+| GET | /api/notifications | Centro de notificaciones del usuario (paginado, estado leído) | viewer |
+| PUT | /api/notifications/preferences | Preferencias: umbral, frecuencia digest, canales, silenciados | viewer |
 
 ### Documents
 | GET | /api/documents/{id} | Metadata + estado etapas | viewer |
 | GET | /api/documents/{id}/content | URL firmada / streaming del binario | viewer |
 | GET | /api/documents/{id}/pages/{n} | Texto + método + confianza de página | viewer |
 | POST | /api/documents/{id}/reprocess | Reintenta etapa fallida (202) | analyst |
+| GET | /api/documents/reviews | Tareas de revisión de extracción pendientes | analyst |
+| POST | /api/documents/{id}/review | Resuelve revisión: texto validado/corregido o carga manual (multipart) | analyst |
 
 ### Analysis / RAG (Knowledge)
 | POST | /api/analysis/{compraId}/run | (Re)ejecuta análisis (202, Idempotency-Key) | analyst |
@@ -50,10 +56,20 @@ Toda API se especifica en OpenAPI **antes** de implementarse (spec por módulo e
 | PUT | /api/proposals/{id}/sections/{sectionId} | Edita sección (If-Match versión → 409 si conflicto) | editor |
 | POST | /api/proposals/{id}/sections/{sectionId}/regenerate | Sugerencia IA (202) | editor |
 | POST | /api/proposals/{id}/compliance | Ejecuta compliance (202) | editor |
+| POST | /api/proposals/{id}/outcome | Registra/corrige el resultado de la propuesta (versionado) | editor |
 | GET | /api/proposals/{id}/compliance | Matriz vigente (+historial) | viewer |
+| GET | /api/proposals/{id}/export?format=docx | Exporta la versión vigente a .docx editable | viewer |
+
+### Administración (SuperAdmin)
+| Método | Ruta | Descripción | Rol |
+|---|---|---|---|
+| GET | /api/admin/rate-limits | Configuración de cuotas vigente + métricas en vivo (uso, 429, circuit breaker) | superadmin |
+| PUT | /api/admin/rate-limits | Modifica cuotas en caliente (motivo obligatorio; validación de rangos; auditado) | superadmin |
 
 ### Company Profile / Audit
 | GET/PUT | /api/company-profile | Perfil de empresa | admin (PUT), viewer (GET) |
+| POST | /api/company-profile/infer-rubros | Infiere rubros por LLM desde la descripción del negocio | editor |
+| PUT | /api/company-profile/rubros | Confirma/edita/descarta rubros (auditoría humana) | editor |
 | GET | /api/audit | Búsqueda por entityId/correlationId/actor/fechas | analyst |
 
 Ejemplo de contrato detallado: [01-example-rag-query.md](01-example-rag-query.md).

@@ -13,5 +13,7 @@
 | ACT-09 | Proposal Service | Internal Service | Genera y versiona propuestas desde plantilla + perfil + requisitos + RAG. |
 | ACT-10 | Compliance Engine | Internal Service | Evalúa cumplimiento; reglas determinísticas primero, LLM como apoyo, nunca autoridad única. |
 | ACT-11 | Keycloak | External System (local) | Identidad, autenticación, RBAC. |
+| ACT-12 | SuperAdmin | Human Actor | Rol por sobre admin; único autorizado a gestionar cuotas/throttling hacia la API externa (FR-066). |
+| ACT-13 | Monitor/Notification Worker | Worker | Detecta oportunidades de alto potencial tras cada sync y despacha notificaciones curadas (in-app + email digest). |
 
 Distinciones: los **workers** reaccionan a eventos/agenda y no exponen API de usuario; los **internal services** son módulos invocables; los **AI agents** producen contenido que siempre pasa por validación de esquema y revisión humana.

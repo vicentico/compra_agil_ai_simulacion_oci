@@ -39,11 +39,17 @@ Todo evento se publica en el exchange topic `ppip.events` con routing key `conte
 | OcrCompleted.v1 | Document Worker | Document Worker | documentId, versionId, pagesOcr[], avgConfidence |
 | DocumentChunked.v1 | Document Worker | Document Worker | documentId, versionId, chunkCount, chunkIds[] |
 | EmbeddingCreated.v1 | Document Worker | AI Worker (trigger análisis) | documentId, versionId, modelVersion, indexedCount, isLastOfCompra |
+| DocumentReviewRequested.v1 | Document Worker | API (tarea UI) | documentId, versionId, reviewTaskId, motivo, confidence |
+| DocumentReviewCompleted.v1 | API | Document Worker (reanuda chunking) | documentId, versionId, reviewTaskId, resolución, resolvedBy |
 | AIAnalysisCompleted.v1 | AI Worker | API, Compliance | compraAgilId, analysisId, analysisVersion, opportunityScore |
 | RequirementsExtracted.v1 | AI Worker | API, Compliance | compraAgilId, requirementIds[], counts por categoría |
 | ProposalGenerated.v1 | AI Worker | API, Compliance (auto-eval) | proposalId, versionId, compraAgilId, sectionStates |
 | ProposalUpdated.v1 | API | Compliance (marca stale) | proposalId, versionId, sectionId, author, authorType |
 | ComplianceEvaluated.v1 | API/AI Worker | API (notif) | evaluationId, proposalVersionId, summary {pass,partial,fail,unknown} |
+| ProposalOutcomeRecorded.v1 | API | Efectividad, Scoring (señal histórica) | proposalId, outcome, montoAdjudicado?, fecha, source |
+| HighPotentialCompraDetected.v1 | Monitor Worker | Notification dispatcher | compraAgilId, version, score, descomposición, umbral |
+| NotificationDispatched.v1 | Notification dispatcher | Audit | notificationId, userId, canal, tipo, compraAgilId?, digestPeriod? |
+| RateLimitConfigChanged.v1 | API (admin) | Sync Worker (hot reload) | configVersion, previo, nuevo, actor, motivo |
 | AuditEventCreated.v1 | Todos | Audit store | auditEvent completo |
 
 Ejemplo normativo completo: [01-example-compra-agil-detected.md](01-example-compra-agil-detected.md).

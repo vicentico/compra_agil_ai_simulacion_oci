@@ -28,12 +28,13 @@
 - **A3 — OCR falla o confianza < umbral:** texto marcado `low_confidence`; chunks igualmente indexados con flag; UI advierte calidad.
 - **A4 — Evento duplicado o fuera de orden:** dedupe por (documentId, etapa, hash); cada etapa verifica precondiciones y re-encola si su insumo no está listo.
 - **A5 — Qdrant caído:** etapa `Indexed` reintenta; el resto del pipeline no se bloquea; job de reconciliación re-indexa pendientes.
+- **A6 — Extracción deficiente → revisión humana (FR-053/054):** si la confianza OCR/densidad extraída queda bajo umbral o el parseo es parcial, el documento pasa a `pending_review` y se publica `DocumentReviewRequested.v1`; la UI muestra la tarea de revisión. El usuario valida/corrige el texto extraído o carga el documento manualmente (nueva DocumentVersion con `source=manual_upload`). Al resolver, se publica `DocumentReviewCompleted.v1` y el pipeline se reanuda desde chunking con el contenido validado. Todo con actor humano auditado.
 
 ## Postcondiciones
 Documento navegable por página, chunks indexados y filtrables por compra, cada etapa auditada con correlationId heredado del sync.
 
 ## Eventos producidos
-`DocumentDetected.v1`, `DocumentDownloaded.v1`, `DocumentExtracted.v1`, `OcrCompleted.v1`, `DocumentChunked.v1`, `EmbeddingCreated.v1`, `AuditEventCreated.v1`
+`DocumentDetected.v1`, `DocumentDownloaded.v1`, `DocumentExtracted.v1`, `OcrCompleted.v1`, `DocumentReviewRequested.v1`, `DocumentReviewCompleted.v1`, `DocumentChunked.v1`, `EmbeddingCreated.v1`, `AuditEventCreated.v1`
 
 ## Datos / APIs
 Document, DocumentVersion, DocumentPage, DocumentChunk, Embedding. `GET /api/compra-agil/{id}/documents`, `GET /api/documents/{id}`.

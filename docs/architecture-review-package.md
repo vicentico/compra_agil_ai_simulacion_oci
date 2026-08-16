@@ -37,6 +37,12 @@ Según MASTER PROMPT 2 §37: la implementación solo comienza tras verificar que
 - OQ-03 (modelo de embeddings) se decide en FASE 9; el diseño de Qdrant ya contempla recreación de colección.
 - ASM-08 (términos de uso) debe validarse antes de sincronizar datos reales.
 
+## Cambios incorporados post-elaboración
+
+- **2026-08-16 — «Propuesta de Plataforma» (usuario):** tres funcionalidades incorporadas como SHOULD HAVE: (1) Human-in-the-Loop en extracción documental (FR-053/054, UC-003 A6, eventos DocumentReviewRequested/Completed); (2) perfilado inteligente de rubros vía LLM con auditoría del usuario (FR-055/056, UC-010); (3) dashboard de oportunidades por matching de rubros + export de propuesta a .docx on-demand (FR-057/058, UC-011). Sin impacto en decisiones ADR existentes; nueva pregunta abierta OQ-09 (taxonomía de rubros) y riesgo RSK-13 (calidad del matching). Matriz de trazabilidad y roadmap actualizados.
+
+- **2026-08-16 — «Propuesta de Mejoras Evolutivas» (usuario), incorporada como SHOULD HAVE:** (1) score de ganabilidad heurístico y explicable (FR-061, ScoringPolicy; recalibración ML diferida a FUTURE como FR-062 por cold start — RSK-14); (2) registro histórico de outcomes de propuestas + dashboard de efectividad/ROI (FR-059/060, UC-012; registro manual con verificación por API sujeta a OQ-10); (3) monitoreo proactivo post-sync + notificaciones curadas in-app y email digest (FR-063/064, UC-013, ACT-13, RSK-15); (4) throttling dinámico hacia ChileCompra con hot-reload y rol **superadmin** con panel exclusivo (FR-065/066, UC-014, NFR-021, amendment de ADR-010, RBAC extendida). Nuevos eventos: ProposalOutcomeRecorded, HighPotentialCompraDetected, NotificationDispatched, RateLimitConfigChanged. Sin cambios en el estilo arquitectónico: el monitoreo se apoya en el Sync Worker existente y un dispatcher de notificaciones; no se crean nuevos servicios físicos.
+
 ## Decisión
 
-**Estado: LISTO PARA REVISIÓN HUMANA.** Con la aprobación del revisor (usuario), se habilita FASE 1. Cualquier observación se incorpora vía cambio de docs + ADR si altera una decisión.
+**Estado: APROBADO** por el revisor (usuario, 2026-08-16), incluyendo el cambio anterior. **FASE 1 (Docker infrastructure) queda habilitada.** Cualquier observación futura se incorpora vía cambio de docs + ADR si altera una decisión.

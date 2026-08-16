@@ -5,13 +5,14 @@ Arquitectura visual: [../04-architecture/07-security-architecture.md](../04-arch
 ## Autenticación y autorización
 OIDC (Keycloak) + JWT; SPA con Code+PKCE; workers con client credentials. RBAC:
 
-| Capacidad | viewer | analyst | editor | admin |
-|---|---|---|---|---|
-| Ver compras/documentos/análisis/RAG | ✔ | ✔ | ✔ | ✔ |
-| Re-ejecutar análisis / reprocesar documentos | | ✔ | ✔ | ✔ |
-| Ver trazabilidad/auditoría | | ✔ | ✔ | ✔ |
-| Crear/editar propuestas, compliance | | | ✔ | ✔ |
-| Sync manual, perfil de empresa, plantillas, configuración | | | | ✔ |
+| Capacidad | viewer | analyst | editor | admin | superadmin |
+|---|---|---|---|---|---|
+| Ver compras/documentos/análisis/RAG/oportunidades/notificaciones | ✔ | ✔ | ✔ | ✔ | ✔ |
+| Re-ejecutar análisis / reprocesar documentos / resolver revisiones | | ✔ | ✔ | ✔ | ✔ |
+| Ver trazabilidad/auditoría | | ✔ | ✔ | ✔ | ✔ |
+| Crear/editar propuestas, compliance, outcomes | | | ✔ | ✔ | ✔ |
+| Sync manual, perfil de empresa, plantillas, configuración, pesos del score | | | | ✔ | ✔ |
+| **Gestión de cuotas API (throttling) — panel exclusivo** | | | | | ✔ |
 
 ## Secretos
 Ticket ChileCompra, API keys LLM, credenciales de datos: Docker secrets / `.env` fuera de Git (`.env.example` sí versionado); escaneo de secretos en CI; procedimiento de rotación documentado en operaciones. → OCI Vault en migración.

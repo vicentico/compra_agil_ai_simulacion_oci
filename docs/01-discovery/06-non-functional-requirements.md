@@ -22,3 +22,4 @@
 | NFR-018 | Maintainability | Prompts versionados como artefactos (/prompts), nunca embebidos dispersos en código ni modificados silenciosamente | PromptVersion referenciada en cada AIExecution |
 | NFR-019 | Reliability | Eventos versionados, idempotentes, serializables, compatibles hacia atrás; consumidores toleran duplicados y desorden | Contract tests de eventos; consumer-driven |
 | NFR-020 | Performance | Backpressure y rate limiting hacia ChileCompra (respetar 429/Retry-After) y hacia proveedores LLM | Circuit breaker + límites configurables por entorno |
+| NFR-021 | Maintainability | Configuración operativa crítica (cuotas API, umbrales de score/notificación) modificable en caliente, sin redeploy, con auditoría de valores previo/nuevo | Cambio aplicado en el siguiente ciclo/request; AuditEvent con diff; test de hot-reload |

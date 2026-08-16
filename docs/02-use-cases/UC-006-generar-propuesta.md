@@ -15,6 +15,7 @@
 4. Regla dura: capacidades, certificaciones y experiencia provienen exclusivamente del CompanyProfile; datos del proceso provienen de requisitos/RAG con evidencia; precios quedan como campos a completar por el usuario salvo que existan en el perfil.
 5. Persiste `Proposal` v1 con `ProposalSection`s, cada una con sus fuentes; publica `ProposalGenerated.v1`; audita con prompt/modelo/tokens.
 6. El usuario recibe la propuesta editable (continúa en UC-007).
+7. En cualquier momento puede **exportar la versión vigente a .docx editable** (FR-058, `GET /api/proposals/{id}/export?format=docx`); el archivo se almacena además en MinIO `generated/` con hash, trazable a la versión exacta de propuesta.
 
 ## Flujos alternativos y errores
 

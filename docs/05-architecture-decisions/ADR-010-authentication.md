@@ -20,3 +20,6 @@ Auth propia (riesgo y esfuerzo injustificados); API keys estáticas (sin usuario
 
 ## Future Reconsideration
 Matriz de permisos fina si aparecen más roles reales; mapeo a OCI IAM en FASE 19.
+
+## Amendment (2026-08-16)
+Se agrega el rol **superadmin** por sobre admin, requerido por FR-066 (gestión exclusiva de cuotas/throttling hacia la API externa — «Propuesta de Mejoras Evolutivas»). Jerarquía resultante: `viewer` < `analyst` < `editor` < `admin` < `superadmin`. El resto de la decisión permanece sin cambios; la matriz RBAC vive en docs/12-security/01-security-controls.md.

@@ -10,5 +10,7 @@
 | OQ-06 | ¿Términos de uso de Mercado Público permiten almacenamiento y procesamiento IA de documentos? | Legal | FASE 5 | Abierta (ASM-08) |
 | OQ-07 | ¿Qué gateway concreto: Traefik, Kong o YARP? | Infraestructura | FASE 1 | Propuesta: Traefik (ADR-009) |
 | OQ-08 | ¿Idioma de la UI solo español o i18n desde el inicio? | Frontend | FASE 16 | Propuesta: español, estructura i18n-ready |
+| OQ-09 | ¿Contra qué taxonomía se hace el matching de rubros: categorías/rubros que expone la API Compra Ágil (¿UNSPSC/ONU?) o taxonomía propia mapeada? | Matching (FR-057) | FASE 12 | Abierta — depende del spike de FASE 5 sobre los campos de categoría reales de la API |
+| OQ-10 | ¿La API pública expone adjudicaciones/órdenes de compra de Compras Ágiles consultables por proceso? Determina si el resultado de propuestas (FR-059) y el rastreo proactivo (FR-063) pueden automatizarse o quedan solo manuales | Efectividad (FR-059/063) | FASE 5 (spike) | Abierta — decisión del usuario: registro manual como base, automatización si la API lo permite |
 
 Regla: ninguna pregunta se cierra silenciosamente; su resolución se registra aquí y, si cambia una decisión, en un ADR.

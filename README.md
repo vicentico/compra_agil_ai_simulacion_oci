@@ -7,8 +7,8 @@ Todo el sistema se ejecuta localmente mediante Docker Compose y simula conceptua
 
 ## Estado del proyecto
 
-**FASE 0 — Architecture & Specification Bootstrap** (actual).
-No existe código de producción todavía: primero especificación, arquitectura y decisiones. Ver [docs/ROADMAP.md](docs/ROADMAP.md).
+**FASE 0 aprobada** (gate 2026-08-16) — próxima: **FASE 1 — Docker infrastructure**.
+No existe código de producción todavía: la especificación, arquitectura y decisiones están completas y aprobadas en el [Architecture Review Package](docs/architecture-review-package.md). Ver [docs/ROADMAP.md](docs/ROADMAP.md).
 
 ## Principio rector
 
