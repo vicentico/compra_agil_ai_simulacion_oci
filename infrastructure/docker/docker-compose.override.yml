@@ -1,0 +1,44 @@
+# ==========================================================================
+# Overrides de DESARROLLO LOCAL (se aplica automáticamente junto al
+# docker-compose.yml base). NO usar en un entorno "production-like":
+# expone puertos de infraestructura directamente al host y habilita el
+# dashboard inseguro de Traefik.
+# ==========================================================================
+services:
+  traefik:
+    command:
+      - --ping=true
+      - --providers.docker=true
+      - --providers.docker.exposedByDefault=false
+      - --providers.docker.network=ppip_app
+      - --providers.file.directory=/etc/traefik/dynamic
+      - --entrypoints.web.address=:80
+      - --api.dashboard=true
+      - --api.insecure=true   # SOLO dev: dashboard sin auth en :8080
+    ports:
+      - "80:80"
+      - "${TRAEFIK_DASHBOARD_PORT:-8080}:8080"
+
+  mongodb:
+    ports: ["${MONGO_PORT:-27017}:27017"]
+
+  redis:
+    ports: ["${REDIS_PORT:-6379}:6379"]
+
+  rabbitmq:
+    ports:
+      - "${RABBITMQ_PORT:-5672}:5672"
+      - "${RABBITMQ_MANAGEMENT_PORT:-15672}:15672"
+
+  minio:
+    ports:
+      - "${MINIO_API_PORT:-9000}:9000"
+      - "${MINIO_CONSOLE_PORT:-9001}:9001"
+
+  qdrant:
+    ports:
+      - "${QDRANT_HTTP_PORT:-6333}:6333"
+      - "${QDRANT_GRPC_PORT:-6334}:6334"
+
+  ollama:
+    ports: ["${OLLAMA_PORT:-11434}:11434"]

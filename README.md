@@ -7,8 +7,17 @@ Todo el sistema se ejecuta localmente mediante Docker Compose y simula conceptua
 
 ## Estado del proyecto
 
-**FASE 0 aprobada** (gate 2026-08-16) — próxima: **FASE 1 — Docker infrastructure**.
-No existe código de producción todavía: la especificación, arquitectura y decisiones están completas y aprobadas en el [Architecture Review Package](docs/architecture-review-package.md). Ver [docs/ROADMAP.md](docs/ROADMAP.md).
+**FASE 0 aprobada** · **FASE 1 (Docker infrastructure) implementada** (2026-08-16) — próxima: **FASE 2 — Observability foundation**.
+Especificación completa en [docs/](docs/); infraestructura y esqueletos ejecutables en `infrastructure/docker/` y `src/`. Ver [docs/ROADMAP.md](docs/ROADMAP.md) (incluye qué se validó y qué falta verificar en un entorno con Docker/SDK reales).
+
+## Arrancar FASE 1
+
+```bash
+cp infrastructure/docker/.env.example infrastructure/docker/.env   # editar credenciales locales
+make up      # perfiles core + app (build de imágenes incluido)
+make smoke   # falla si algo no queda healthy
+```
+Detalle y decisiones documentadas: [infrastructure/docker/README.md](infrastructure/docker/README.md).
 
 ## Principio rector
 

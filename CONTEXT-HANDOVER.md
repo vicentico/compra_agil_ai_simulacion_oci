@@ -7,7 +7,7 @@
 | Rol que se traspasa | Tech Lead / Arquitecto del proyecto (agente IA con supervisión del usuario) |
 | Ubicación del repositorio | `C:\ClaudeCowork\Agente_Compras_Agiles` (raíz del repo = carpeta del proyecto) |
 | Sesión de origen | Claude Cowork, modelo configurado `claude-fable-5` |
-| Estado global | **FASE 0 completada y APROBADA** (gate FASE 0→1 aprobado el 2026-08-16). Cero código de producción, por diseño. |
+| Estado global | **FASE 0 aprobada** · **FASE 1 (Docker infrastructure) implementada** (2026-08-16). Primer código del repo: infraestructura + esqueletos ejecutables. |
 | Documentos rectores | `Master Prompt — OCI Local Simulator...md` (QUÉ construir) + MASTER PROMPT 2 (CÓMO construirlo — entregado por chat, ver §3.6 de este documento) |
 
 > **Instrucción para el asistente entrante:** lee este documento completo, luego `README.md`, `docs/ROADMAP.md` y `docs/architecture-review-package.md`. Con eso puedes asumir el rol sin preguntas repetitivas. Ante cualquier duda de detalle, la respuesta está en `docs/` — este proyecto se rige por el principio "el sistema debe comprenderse desde docs/ sin leer el código".
@@ -129,18 +129,19 @@ C:\ClaudeCowork\Agente_Compras_Agiles\
 ## 5. Estado Actual Exacto
 
 ### 5.1 Hitos 100% terminados
-1. **FASE 0 — Architecture & Specification Bootstrap: COMPLETA Y APROBADA** (gate 2026-08-16, registrado en `docs/architecture-review-package.md`). Incluye toda la estructura documental anterior con verificación de coherencia (0 enlaces rotos, IDs consistentes).
-2. **Cambio 1 «Propuesta de Plataforma» integrado (SHOULD):** HITL en extracción documental (FR-053/054, UC-003 A6, ExtractionReviewTask), rubros inferidos por LLM + auditoría del usuario (FR-055/056, UC-010), dashboard de matching (FR-057, UC-011), export .docx (FR-058).
-3. **Cambio 2 «Mejoras Evolutivas» integrado (SHOULD):** outcomes de propuestas + dashboard de efectividad (FR-059/060, UC-012), score de ganabilidad heurístico explicable (FR-061; ML = FUTURE FR-062 por cold start), monitoreo proactivo + notificaciones in-app/email digest (FR-063/064, UC-013), throttling dinámico hot-reload + rol superadmin con panel de cuotas (FR-065/066, UC-014, NFR-021).
+1. **FASE 0 — Architecture & Specification Bootstrap: COMPLETA Y APROBADA** (gate 2026-08-16, registrado en `docs/architecture-review-package.md`). 0 enlaces rotos, IDs consistentes.
+2. **Cambio 1 «Propuesta de Plataforma» integrado (SHOULD):** HITL en extracción documental (FR-053/054, UC-003 A6), rubros por LLM + auditoría (FR-055/056, UC-010), dashboard de matching (FR-057, UC-011), export .docx (FR-058).
+3. **Cambio 2 «Mejoras Evolutivas» integrado (SHOULD):** outcomes + dashboard de efectividad (FR-059/060, UC-012), score de ganabilidad heurístico (FR-061; ML = FUTURE FR-062), monitoreo proactivo + notificaciones (FR-063/064, UC-013), throttling dinámico + rol superadmin (FR-065/066, UC-014, NFR-021).
+4. **FASE 1 — Docker infrastructure: IMPLEMENTADA (2026-08-16).** `infrastructure/docker/docker-compose.yml` (14 servicios, perfiles core/app/demo, redes edge/app/data/obs-reservada) + override de dev; esqueletos .NET 10 `Ppip.PlatformApi`/`Ppip.SyncWorker`/`Ppip.DocumentWorker`/`Ppip.AiWorker` con `/health`+`/ready` (dependencias reales); `Ppip.BuildingBlocks.Health` compartido; frontend Angular 20.3 (CLI oficial, build+3 tests en verde); `Makefile` + `scripts/smoke-test.sh`. **Validado:** `docker compose config`, XML/C# estático, `ng build`/`ng test` reales. **NO validado** (el entorno que lo generó no tenía acceso a Docker Hub ni SDK .NET instalado): build real de las 5 imágenes y arranque end-to-end — primera acción al retomar con Docker/SDK reales: `make up && make smoke`. Deliberadamente fuera de esta fase: stack de observabilidad (es FASE 2), seeding real (placeholder que falla explícito), usuarios Mongo de mínimo privilegio (FASE 4+). Detalle: `docs/ROADMAP.md` (nota de cierre) e `infrastructure/docker/README.md`.
 
-**NO existe código de producción, docker-compose, ni prompts materializados.** Es intencional: la regla principal del método prohíbe codificar antes del gate — que ya está aprobado, por lo que la implementación puede comenzar.
+Prompts, lógica de dominio real y `docker-compose` de observabilidad **todavía no existen** — eso es FASE 2+.
 
 ### 5.2 Decisiones del usuario ya tomadas (no volver a preguntar)
 Idioma docs: español · repo en la raíz de la carpeta · cambios 1 y 2 como SHOULD · gate FASE 0→1 aprobado · recomendador heurístico ahora, ML después · outcomes manuales + API si el spike la confirma · notificaciones in-app + email digest (MailHog local).
 
 ### 5.3 Las 3 tareas inmediatas
-1. **FASE 1 — Docker infrastructure** (siguiente acción concreta): `infrastructure/docker/` con docker-compose (perfiles core/app/obs/demo), 13 servicios (MongoDB, RabbitMQ, MinIO, Redis, Qdrant, Keycloak, Ollama, Traefik, Prometheus, Grafana, Loki, OTel Collector + esqueletos), redes segmentadas, volúmenes, `.env.example`, health checks encadenados, esqueletos .NET 10 (Platform API + 3 workers con `/health` `/ready`) y Angular 20. Criterio de éxito: `docker compose up -d` → todo healthy. Guía: `docs/04-architecture/04-deployment-diagram.md`.
-2. **FASE 2 — Observability foundation:** OTel en los 4 servicios esqueleto, Collector → Prometheus/Loki/traces (decidir Tempo vs Jaeger — pendiente de ADR menor), Grafana con dashboards base, propagación traceId+correlationId demostrada end-to-end.
+1. **Verificar FASE 1 en un entorno con Docker Desktop + .NET 10 SDK reales:** `cp infrastructure/docker/.env.example infrastructure/docker/.env`, `make up`, `make smoke`. Corregir lo que la validación estática (hecha en un sandbox sin acceso a Docker Hub) no pudo anticipar.
+2. **FASE 2 — Observability foundation:** OTel en los 4 servicios esqueleto, Collector → Prometheus/Loki/traces (decidir Tempo vs Jaeger — ADR menor pendiente), Grafana con dashboards base, propagación traceId+correlationId demostrada end-to-end. Guía: `docs/13-observability/01-observability-spec.md`.
 3. **FASE 3 — Identity & security:** realm Keycloak `ppip`, 5 roles, JWT en Platform API, matriz RBAC con tests de autorización, secretos vía Docker secrets/.env, rate limiting en Traefik.
 
 En paralelo (preparación de FASE 5, puede adelantarse): conseguir el ticket/API key de ChileCompra y ejecutar el **spike** que cierra OQ-01 (contrato real y paginación), OQ-02 (descarga de adjuntos), OQ-10 (¿expone adjudicaciones/OC?) y valida ASM-01/ASM-08 (términos de uso).
@@ -154,4 +155,8 @@ RSK-02 (alucinaciones — mitigación en cada capa), RSK-05 (sobreingeniería �
 - Flujo de entrega de archivos: generar en workspace cloud → SendUserFile → device_commit_files → (si hay que sobrescribir) device_bash con cp -f.
 
 ---
-*Fin del handover. El asistente entrante debe confirmar lectura de README + ROADMAP + review package y proceder con la tarea inmediata #1 (FASE 1) siguiendo el formato de respuesta §49.*
+### 5.6 Nota de versión — Angular (transparencia de decisión, no oculta el trade-off)
+El registro npm ya publica Angular 22 estable (2026-08). Se implementó el frontend en **Angular 20.3.x** por ser la versión ya documentada en el stack (ARCHITECTURE.md) — no se saltó de versión sin ADR. Si el equipo quiere adoptar 22, requiere una decisión explícita, no un cambio silencioso de un scaffold.
+
+---
+*Fin del handover. El asistente entrante debe confirmar lectura de README + ROADMAP + `infrastructure/docker/README.md` y proceder con la tarea inmediata #1 (verificar FASE 1 con Docker/SDK reales) siguiendo el formato de respuesta §49.*

@@ -1,0 +1,12 @@
+# Configuración dinámica de Traefik: middlewares transversales (FASE 1).
+# El TLS real y el WAF/rate-limit de borde se completan en FASE 3 (seguridad)
+# — aquí solo se documenta la estructura para que FASE 3 la complete sin
+# reescribir el edge.
+http:
+  middlewares:
+    ppip-security-headers:
+      headers:
+        stsSeconds: 0            # HTTPS aún no habilitado en FASE 1 (POC http-only local)
+        contentTypeNosniff: true
+        browserXssFilter: true
+        customFrameOptionsValue: "SAMEORIGIN"

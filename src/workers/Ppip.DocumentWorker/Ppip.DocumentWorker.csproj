@@ -1,0 +1,8 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <RootNamespace>Ppip.DocumentWorker</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\building-blocks\Ppip.BuildingBlocks.Health\Ppip.BuildingBlocks.Health.csproj" />
+  </ItemGroup>
+</Project>

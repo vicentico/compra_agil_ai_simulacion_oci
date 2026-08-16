@@ -1,0 +1,22 @@
+<main class="shell">
+  <header>
+    <h1>{{ title() }}</h1>
+    <p class="subtitle">Public Procurement Intelligence Platform — ChileCompra Compra Ágil</p>
+  </header>
+
+  <section class="status-card" [class.ok]="apiStatus() === 'ok'" [class.error]="apiStatus() === 'error'">
+    <span class="dot"></span>
+    <div>
+      <strong>Platform API</strong>
+      <p>{{ apiDetail() }}</p>
+    </div>
+  </section>
+
+  <section class="phase-note">
+    <p>
+      Esqueleto de <strong>FASE 1 — Docker infrastructure</strong>. Los módulos funcionales
+      (dashboard, oportunidades, documentos, RAG, propuestas, compliance, trazabilidad) se
+      construyen a partir de FASE 16 según <code>docs/ROADMAP.md</code>.
+    </p>
+  </section>
+</main>

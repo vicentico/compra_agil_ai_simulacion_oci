@@ -5,7 +5,7 @@ Orden según MASTER PROMPT 2 §35. Cada fase cumple el Definition of Done (MP2 �
 | Fase | Contenido | Entregable verificable | Estado |
 |---|---|---|---|
 | **0** | Repository + documentation foundation (este bootstrap) | docs/ completa + Architecture Review Package aprobado | ✅ Aprobada (gate 2026-08-16, incluye cambio «Propuesta de Plataforma» como SHOULD) |
-| **1** | Docker infrastructure: compose con MongoDB, RabbitMQ, MinIO, Redis, Qdrant, Keycloak, Ollama, Traefik + esqueletos .NET 10 / Angular 20 | `docker compose up -d` todo healthy | Pendiente |
+| **1** | Docker infrastructure: compose con MongoDB, RabbitMQ, MinIO, Redis, Qdrant, Keycloak, Ollama, Traefik + esqueletos .NET 10 / Angular 20 | `docker compose up -d` todo healthy | ✅ Implementada (2026-08-16) — ver nota abajo |
 | **2** | Observability foundation: OTel en esqueletos, Collector, Prometheus, Grafana, Loki, dashboards base | Trace end-to-end visible de un request de prueba | Pendiente |
 | **3** | Identity & security: realm Keycloak, JWT en API, RBAC, secretos, rate limiting | AuthZ matrix tests verdes | Pendiente |
 | **4** | Procurement domain: dominio + building blocks (outbox, envelope de eventos, idempotencia) + architecture tests | Dominio testeado sin infraestructura | Pendiente |
@@ -41,6 +41,14 @@ Se implementan en su fase natural **solo si el núcleo MUST de esa fase está es
 | FR-065/066 | Throttling dinámico + rol superadmin y panel de cuotas | FASE 5 (rate limiter dinámico en el client) + FASE 3 (rol) + FASE 16 (panel) |
 
 FUTURE explícito: FR-062 (recalibración ML del score) — se especificará cuando exista volumen real de outcomes (RSK-14).
+
+## Nota de cierre de FASE 1 (2026-08-16)
+
+Implementado y validado en el entorno de build: `infrastructure/docker/docker-compose.yml` (14 servicios, perfiles `core`/`app`/`demo`, redes segmentadas edge/app/data/obs-reservada) + `docker-compose.override.yml` de dev; esqueletos `Ppip.PlatformApi`, `Ppip.SyncWorker`, `Ppip.DocumentWorker`, `Ppip.AiWorker` (.NET 10, `/health` liveness + `/ready` verificando dependencias reales); `Ppip.BuildingBlocks.Health` compartido; frontend Angular 20.3 generado con el CLI oficial (build y 3 tests unitarios en verde); `Makefile` + `scripts/smoke-test.sh`.
+
+**Validado:** `docker compose config` (YAML/interpolación/perfiles/rutas de build, 14 servicios), XML de los 5 `.csproj`, balance de código de los `.cs`, `ng build`/`ng test` reales del frontend (compilan y pasan).
+**No validado — limitación del entorno que generó el scaffold, no del código:** build real de las 5 imágenes Docker y arranque end-to-end de los contenedores, porque ese entorno no tenía acceso de red a Docker Hub ni el SDK de .NET 10 instalado. **Primera acción recomendada al retomar en un entorno con Docker Desktop/SDK real: `make up && make smoke`** y corregir lo que la validación estática no pudo anticipar (típicamente: pequeños ajustes de healthcheck o versión de imagen).
+**Deliberadamente fuera de esta fase:** stack de observabilidad (FASE 2), seeding real (`scripts/seed` es un placeholder que falla explícitamente), usuarios Mongo con privilegio mínimo (FASE 4+). Detalle completo de cada decisión y su trade-off en `infrastructure/docker/README.md`.
 
 ## Gates
 

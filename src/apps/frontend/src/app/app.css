@@ -1,0 +1,57 @@
+:host {
+  display: block;
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  color: #1a1a2e;
+  max-width: 640px;
+  margin: 4rem auto;
+  padding: 0 1.5rem;
+}
+
+.subtitle {
+  color: #555;
+  margin-top: 0;
+}
+
+.status-card {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  border: 1px solid #e0e0e6;
+  border-radius: 8px;
+  padding: 1rem 1.25rem;
+  background: #fafafc;
+}
+
+.status-card .dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #f0ad4e;
+  flex-shrink: 0;
+}
+
+.status-card.ok .dot {
+  background: #2e9e5b;
+}
+
+.status-card.error .dot {
+  background: #d9534f;
+}
+
+.status-card p {
+  margin: 0.25rem 0 0;
+  font-size: 0.9rem;
+  color: #444;
+}
+
+.phase-note {
+  margin-top: 2rem;
+  font-size: 0.85rem;
+  color: #666;
+}
+
+.phase-note code {
+  background: #f0f0f4;
+  padding: 0.1rem 0.35rem;
+  border-radius: 4px;
+}

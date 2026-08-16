@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>Ppip.BuildingBlocks.Health</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- Versión flotante intencional para el esqueleto de FASE 1: se fija una
+         versión exacta vía Central Package Management al implementar lógica
+         real de dominio (FASE 4+). Ver docs/ROADMAP.md. -->
+    <PackageReference Include="MongoDB.Driver" Version="3.*" />
+    <PackageReference Include="RabbitMQ.Client" Version="7.*" />
+    <PackageReference Include="StackExchange.Redis" Version="2.*" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,317 @@
+# ==========================================================================
+# PPIP — docker-compose.yml (FASE 1: Docker infrastructure)
+#
+# Implementa docs/04-architecture/04-deployment-diagram.md. Perfiles:
+#   core → almacenes de datos, broker, identidad, LLM local, edge (Traefik)
+#   app  → esqueletos de aplicación (.NET 10 x4 + Angular 20)
+#   demo → placeholder de seeding (FR-052, no implementado aún — ver README)
+#
+# Los contenedores de observabilidad (OTel/Prometheus/Grafana/Loki) NO están
+# aquí a propósito: son alcance de FASE 2 (docs/ROADMAP.md). Solo se reserva
+# la red `obs` para que esa fase la use sin tocar este archivo.
+#
+# Tags de imagen: se eligieron por estabilidad conocida a la fecha de
+# redacción (2026-08). Fijar por dígest antes de FASE 19 (ver README).
+# ==========================================================================
+
+x-healthcheck-defaults: &healthcheck-defaults
+  interval: 10s
+  timeout: 5s
+  retries: 6
+  start_period: 20s
+
+x-service-defaults: &service-defaults
+  restart: unless-stopped
+  logging:
+    driver: json-file
+    options:
+      max-size: "10m"
+      max-file: "3"
+
+networks:
+  edge:
+    name: ppip_edge
+  app:
+    name: ppip_app
+  data:
+    name: ppip_data
+    internal: true    # defensa en profundidad (T9/T12): sin salida directa a internet
+  obs:
+    name: ppip_obs     # reservada para FASE 2 (Observability foundation)
+
+volumes:
+  mongo_data:
+  redis_data:
+  rabbitmq_data:
+  minio_data:
+  qdrant_data:
+  keycloak_data:
+  ollama_data:
+
+services:
+  # ------------------------------------------------------------------ EDGE
+  traefik:
+    <<: *service-defaults
+    image: traefik:v3.1
+    profiles: ["core"]
+    command:
+      - --ping=true
+      - --providers.docker=true
+      - --providers.docker.exposedByDefault=false
+      - --providers.docker.network=ppip_app
+      - --providers.file.directory=/etc/traefik/dynamic
+      - --entrypoints.web.address=:80
+      - --api.dashboard=true
+    ports:
+      - "80:80"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./config/traefik/dynamic:/etc/traefik/dynamic:ro
+    networks: [edge, app]
+    healthcheck:
+      <<: *healthcheck-defaults
+      test: ["CMD", "traefik", "healthcheck", "--ping"]
+
+  # ------------------------------------------------------------------ DATA
+  mongodb:
+    <<: *service-defaults
+    image: mongo:7.0
+    profiles: ["core"]
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USER}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD}
+    volumes:
+      - mongo_data:/data/db
+    networks: [data]
+    healthcheck:
+      <<: *healthcheck-defaults
+      test: ["CMD-SHELL", "echo 'db.runCommand(\"ping\").ok' | mongosh -u $$MONGO_INITDB_ROOT_USERNAME -p $$MONGO_INITDB_ROOT_PASSWORD --quiet --authenticationDatabase admin | grep -q 1"]
+
+  redis:
+    <<: *service-defaults
+    image: redis:7.4-alpine
+    profiles: ["core"]
+    volumes:
+      - redis_data:/data
+    networks: [data]
+    healthcheck:
+      <<: *healthcheck-defaults
+      test: ["CMD", "redis-cli", "ping"]
+
+  rabbitmq:
+    <<: *service-defaults
+    image: rabbitmq:3.13-management-alpine
+    profiles: ["core"]
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks: [data]
+    healthcheck:
+      <<: *healthcheck-defaults
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+
+  minio:
+    <<: *service-defaults
+    image: minio/minio:latest
+    profiles: ["core"]
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+    volumes:
+      - minio_data:/data
+    networks: [data]
+    healthcheck:
+      <<: *healthcheck-defaults
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+
+  qdrant:
+    <<: *service-defaults
+    image: qdrant/qdrant:latest
+    profiles: ["core"]
+    environment:
+      QDRANT__SERVICE__API_KEY: ${QDRANT_API_KEY}
+    volumes:
+      - qdrant_data:/qdrant/storage
+    networks: [data]
+    healthcheck:
+      <<: *healthcheck-defaults
+      test: ["CMD-SHELL", "bash -c 'exec 3<>/dev/tcp/127.0.0.1/6333 && echo -e \"GET /healthz HTTP/1.1\\r\\nHost: localhost\\r\\nConnection: close\\r\\n\\r\\n\" >&3 && head -1 <&3 | grep -q 200'"]
+
+  # ------------------------------------------------------------------- APP
+  ollama:
+    <<: *service-defaults
+    image: ollama/ollama:latest
+    profiles: ["core"]
+    volumes:
+      - ollama_data:/root/.ollama
+    networks: [app]
+    healthcheck:
+      <<: *healthcheck-defaults
+      test: ["CMD", "ollama", "list"]
+      start_period: 40s
+
+  keycloak:
+    <<: *service-defaults
+    image: quay.io/keycloak/keycloak:26.0
+    profiles: ["core"]
+    command: start-dev --health-enabled=true --http-relative-path=/
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_ADMIN_USER}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
+      KC_HEALTH_ENABLED: "true"
+      KC_HOSTNAME: auth.${PPIP_DOMAIN}
+      KC_HOSTNAME_STRICT: "false"
+      KC_PROXY_HEADERS: xforwarded
+    volumes:
+      - keycloak_data:/opt/keycloak/data
+    networks: [edge, app]
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.keycloak.rule: Host(`auth.${PPIP_DOMAIN}`)
+      traefik.http.routers.keycloak.entrypoints: web
+      traefik.http.services.keycloak.loadbalancer.server.port: "8080"
+    healthcheck:
+      <<: *healthcheck-defaults
+      start_period: 40s
+      # Imagen Keycloak (Quarkus/UBI) sin curl: se usa /dev/tcp de bash contra
+      # el endpoint de management (puerto 9000) — patrón documentado para este caso.
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/127.0.0.1/9000 && echo -e 'GET /health/ready HTTP/1.1\\r\\nHost: localhost\\r\\nConnection: close\\r\\n\\r\\n' >&3 && cat <&3 | grep -q '\"status\": \"UP\"'"]
+
+  platform-api:
+    <<: *service-defaults
+    build:
+      context: ../../
+      dockerfile: src/services/Ppip.PlatformApi/Dockerfile
+    profiles: ["app"]
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      Ppip__Mongo__ConnectionString: mongodb://${MONGO_ROOT_USER}:${MONGO_ROOT_PASSWORD}@mongodb:27017
+      Ppip__Redis__ConnectionString: redis:6379
+      Ppip__RabbitMq__Host: rabbitmq
+      Ppip__RabbitMq__Username: ${RABBITMQ_USER}
+      Ppip__RabbitMq__Password: ${RABBITMQ_PASSWORD}
+      Ppip__MinIo__Endpoint: http://minio:9000
+      Ppip__Qdrant__Endpoint: http://qdrant:6333
+      Ppip__Cors__AllowedOrigins: ${CORS_ALLOWED_ORIGINS}
+    networks: [app, data]
+    depends_on:
+      mongodb: {condition: service_healthy}
+      redis: {condition: service_healthy}
+      rabbitmq: {condition: service_healthy}
+      minio: {condition: service_healthy}
+      qdrant: {condition: service_healthy}
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.platform-api.rule: Host(`api.${PPIP_DOMAIN}`)
+      traefik.http.routers.platform-api.entrypoints: web
+      traefik.http.services.platform-api.loadbalancer.server.port: "8080"
+    healthcheck:
+      <<: *healthcheck-defaults
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+
+  sync-worker:
+    <<: *service-defaults
+    build:
+      context: ../../
+      dockerfile: src/workers/Ppip.SyncWorker/Dockerfile
+    profiles: ["app"]
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      Ppip__Mongo__ConnectionString: mongodb://${MONGO_ROOT_USER}:${MONGO_ROOT_PASSWORD}@mongodb:27017
+      Ppip__RabbitMq__Host: rabbitmq
+      Ppip__RabbitMq__Username: ${RABBITMQ_USER}
+      Ppip__RabbitMq__Password: ${RABBITMQ_PASSWORD}
+    networks: [app, data]
+    depends_on:
+      mongodb: {condition: service_healthy}
+      rabbitmq: {condition: service_healthy}
+    healthcheck:
+      <<: *healthcheck-defaults
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+
+  document-worker:
+    <<: *service-defaults
+    build:
+      context: ../../
+      dockerfile: src/workers/Ppip.DocumentWorker/Dockerfile
+    profiles: ["app"]
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      Ppip__Mongo__ConnectionString: mongodb://${MONGO_ROOT_USER}:${MONGO_ROOT_PASSWORD}@mongodb:27017
+      Ppip__RabbitMq__Host: rabbitmq
+      Ppip__RabbitMq__Username: ${RABBITMQ_USER}
+      Ppip__RabbitMq__Password: ${RABBITMQ_PASSWORD}
+      Ppip__MinIo__Endpoint: http://minio:9000
+      Ppip__Qdrant__Endpoint: http://qdrant:6333
+    networks: [app, data]
+    depends_on:
+      mongodb: {condition: service_healthy}
+      rabbitmq: {condition: service_healthy}
+      minio: {condition: service_healthy}
+      qdrant: {condition: service_healthy}
+    healthcheck:
+      <<: *healthcheck-defaults
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+
+  ai-worker:
+    <<: *service-defaults
+    build:
+      context: ../../
+      dockerfile: src/workers/Ppip.AiWorker/Dockerfile
+    profiles: ["app"]
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      Ppip__Mongo__ConnectionString: mongodb://${MONGO_ROOT_USER}:${MONGO_ROOT_PASSWORD}@mongodb:27017
+      Ppip__RabbitMq__Host: rabbitmq
+      Ppip__RabbitMq__Username: ${RABBITMQ_USER}
+      Ppip__RabbitMq__Password: ${RABBITMQ_PASSWORD}
+      Ppip__Qdrant__Endpoint: http://qdrant:6333
+      Ppip__Ollama__Endpoint: http://ollama:11434
+    networks: [app, data]
+    depends_on:
+      mongodb: {condition: service_healthy}
+      rabbitmq: {condition: service_healthy}
+      qdrant: {condition: service_healthy}
+      ollama: {condition: service_healthy}
+    healthcheck:
+      <<: *healthcheck-defaults
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+
+  frontend:
+    <<: *service-defaults
+    build:
+      context: ../../src/apps/frontend
+      dockerfile: Dockerfile
+    profiles: ["app"]
+    networks: [app]
+    depends_on:
+      platform-api: {condition: service_healthy}
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.frontend.rule: Host(`${PPIP_DOMAIN}`)
+      traefik.http.routers.frontend.entrypoints: web
+      traefik.http.services.frontend.loadbalancer.server.port: "80"
+    healthcheck:
+      <<: *healthcheck-defaults
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:80/healthz"]
+
+  # ------------------------------------------------------------------ DEMO
+  seed:
+    <<: *service-defaults
+    build:
+      context: ../../scripts/seed
+      dockerfile: Dockerfile
+    profiles: ["demo"]
+    restart: "no"
+    networks: [app, data]
+    environment:
+      Ppip__Mongo__ConnectionString: mongodb://${MONGO_ROOT_USER}:${MONGO_ROOT_PASSWORD}@mongodb:27017
+    depends_on:
+      mongodb: {condition: service_healthy}
