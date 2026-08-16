@@ -1,0 +1,86 @@
+## ============================
+## Secretos y configuracion local
+## ============================
+.env
+.env.*
+!.env.example
+*.local.json
+appsettings.*.local.json
+secrets.json
+
+## ============================
+## .NET / C# (backend)
+## ============================
+bin/
+obj/
+out/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+[Dd]ebug/
+[Rr]elease/
+[Xx]64/
+[Xx]86/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+*.pdb
+*.dll
+*.cache
+.vs/
+TestResults/
+coverage/
+*.trx
+*.coverage
+*.coveragexml
+
+## ============================
+## Angular / Node (frontend)
+## ============================
+node_modules/
+dist/
+.angular/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.npm/
+.eslintcache
+
+## ============================
+## Docker / datos de contenedores
+## ============================
+infrastructure/**/data/
+infrastructure/**/volumes/
+*.pid
+
+## ============================
+## IDEs y editores
+## ============================
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.swp
+*.swo
+
+## ============================
+## Sistema operativo
+## ============================
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+## ============================
+## Logs y temporales
+## ============================
+*.log
+logs/
+tmp/
+temp/
+_to_delete/
+
+## ============================
+## Datos generados / evaluacion
+## ============================
+evaluation/results/
+evaluation/**/*.output.json
