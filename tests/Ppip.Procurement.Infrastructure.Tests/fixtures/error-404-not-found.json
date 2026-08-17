@@ -1,0 +1,12 @@
+{
+  "success": "NOK",
+  "trace": null,
+  "payload": null,
+  "errors": [
+    {
+      "codigo": "404",
+      "mensaje": "No existe Compra Ágil con el código indicado.",
+      "detalle": null
+    }
+  ]
+}

@@ -7,8 +7,8 @@ Todo el sistema se ejecuta localmente mediante Docker Compose y simula conceptua
 
 ## Estado del proyecto
 
-**FASE 0 aprobada** · **FASE 1 (Docker infrastructure)** · **FASE 2 (Observability)** · **FASE 3 (Identity & security)** · **FASE 4 (Procurement domain) implementadas** (2026-08-16) — próxima: **FASE 5 — ChileCompra integration**.
-Especificación completa en [docs/](docs/); infraestructura y esqueletos ejecutables en `infrastructure/docker/` y `src/`. Dominio de Procurement (sin infraestructura, 42 tests): `src/modules/procurement/Ppip.Procurement.Domain`. Ver [docs/ROADMAP.md](docs/ROADMAP.md) (incluye qué se validó en cada fase).
+**FASE 0 aprobada** · **FASE 1-5 implementadas** (Docker infra, Observability, Identity & security, Procurement domain, ChileCompra integration) (2026-08-16) — próxima: **FASE 6 — Incremental synchronization**.
+Especificación completa en [docs/](docs/); infraestructura y esqueletos ejecutables en `infrastructure/docker/` y `src/`. Dominio de Procurement (sin infraestructura, 42 tests): `src/modules/procurement/Ppip.Procurement.Domain`. Cliente resiliente de la API real de ChileCompra (spike ejecutado, 22 contract tests): `src/modules/procurement/Ppip.Procurement.Infrastructure`. Ver [docs/ROADMAP.md](docs/ROADMAP.md) (incluye qué se validó en cada fase).
 
 ## Arrancar FASE 1 + 2 + 3
 

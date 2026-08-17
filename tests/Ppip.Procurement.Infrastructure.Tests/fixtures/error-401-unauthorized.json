@@ -1,0 +1,12 @@
+{
+  "success": "NOK",
+  "trace": null,
+  "payload": null,
+  "errors": [
+    {
+      "codigo": "401",
+      "mensaje": "El ticket no existe, es inválido o no tiene permisos.",
+      "detalle": null
+    }
+  ]
+}

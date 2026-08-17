@@ -1,0 +1,72 @@
+{
+    "success": "OK",
+    "trace": null,
+    "payload": {
+        "codigo": "418-1191-COT26",
+        "nombre": "KCR-OLOPATADINA 0,2% (2 MG/ML) COLIRIO LIBRE DE PRESERVANTES REFERENCIA OLOF",
+        "descripcion": "COTIZAR SOLO SI DISPONE STOCK DE LA DOSIS INDICADA. INCLUIR FICHA T\u00c9CNICA Y RESOLUCI\u00d3N SANITARIA O SE DEJAR\u00c1 INADMISIBLE AL PROVEEDOR QUE NO ADJUNTE DETALLES DEL PRODUCTO.INCLUIR DESPACHO A PUERTO AYSEN EN LA COTIZACI\u00d3N Y DEBE TENER VIGENCIA DE 30 D\u00cdAS. INDICAR FECHA DE VENCIMIENTO MAYOR A UN A\u00d1O. INCLUIR DATOS BANCARIOS, ENTREGA INMEDIATA Y ENTREGA DE DATOS PARA EL SERVICIO POST VENTA. INDICAR MONTO M\u00cdNIMO DE DESPACHO. SI DISPONE CARTA DE CANJE DEBE CONSIDERAR EL RETIRO. INCLUIR FOTO\n\n",
+        "estado": {
+            "id_estado": 2,
+            "codigo": "publicada",
+            "glosa": "Publicada"
+        },
+        "convocatoria": {
+            "estado_convocatoria": 1,
+            "descripcion": "Primer llamado",
+            "fecha_cierre_primer_llamado": "2026-08-18 08:30",
+            "fecha_cierre_segundo_llamado": "2026-08-19 17:57"
+        },
+        "fechas": {
+            "fecha_publicacion": "2026-08-16 23:02",
+            "fecha_cierre": "2026-08-18 08:30",
+            "fecha_ultimo_cambio": "2026-08-16 23:05",
+            "fecha_cancelacion": null
+        },
+        "entrega": {
+            "direccion_entrega": "YUSSEFF LAIBE 180",
+            "plazo_entrega_dias": 10
+        },
+        "documentos": [],
+        "presupuesto": {
+            "tipo_presupuesto": "Estimado",
+            "moneda": "CLP",
+            "presupuesto_estimado": 2000000,
+            "monto_disponible": 2000000,
+            "monto_disponible_clp": 2000000,
+            "valor_cambio_moneda": null,
+            "fecha_cambio_moneda": null
+        },
+        "id_orden_compra": null,
+        "institucion": {
+            "organismo_comprador": "SERVICIO NACIONAL DE SALUD HOSPITAL DE PUERTO AYSEN",
+            "rut": "61.602.279-2",
+            "unidad_compra": "H Puerto Ays\u00e9n",
+            "region": 11,
+            "nombre_region": "Regi\u00f3n Ays\u00e9n del General Carlos Ib\u00e1\u00f1ez del Campo"
+        },
+        "productos_solicitados": [
+            {
+                "codigo_producto": 51161639,
+                "nombre": "Clorhidrato de olopatadina",
+                "descripcion": "OLOPATADINA 0,2% (2 MG/ML) COLIRIO LIBRE DE PRESERVANTES REFERENCIA OLOF\n\n",
+                "cantidad": 150,
+                "unidad_medida": "EA"
+            }
+        ],
+        "proveedores_cotizando": [],
+        "resumen": {
+            "multa_sancion": 0,
+            "total_ofertas_recibidas": 0,
+            "total_demandas": 0
+        },
+        "motivos": {
+            "motivo_cancelacion": null,
+            "motivo_desierta": null
+        },
+        "flags": {
+            "considera_requisitos_medioambientales": false,
+            "considera_requisitos_impacto_social_economico": false
+        }
+    },
+    "errors": null
+}

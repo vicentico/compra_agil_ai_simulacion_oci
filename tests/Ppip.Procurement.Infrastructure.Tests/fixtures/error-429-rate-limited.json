@@ -1,0 +1,12 @@
+{
+  "success": "NOK",
+  "trace": null,
+  "payload": null,
+  "errors": [
+    {
+      "codigo": "429",
+      "mensaje": "Se ha alcanzado el límite de solicitudes permitido. Intente nuevamente más tarde.",
+      "detalle": null
+    }
+  ]
+}

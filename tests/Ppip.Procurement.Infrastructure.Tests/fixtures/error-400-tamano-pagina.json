@@ -1,0 +1,12 @@
+{
+  "success": "NOK",
+  "trace": null,
+  "payload": null,
+  "errors": [
+    {
+      "codigo": "400",
+      "mensaje": "Parámetros de consulta inválidos.",
+      "detalle": "tamano_pagina debe estar entre 10 y 50"
+    }
+  ]
+}

@@ -7,7 +7,7 @@
 | Rol que se traspasa | Tech Lead / Arquitecto del proyecto (agente IA con supervisión del usuario) |
 | Ubicación del repositorio | `C:\ClaudeCowork\Agente_Compras_Agiles` (raíz del repo = carpeta del proyecto) |
 | Sesión de origen | Claude Cowork, modelo configurado `claude-fable-5` |
-| Estado global | **FASE 0 aprobada · FASE 1-4 (Docker infra, Observability, Identity & security, Procurement domain) implementadas** (2026-08-16). Próxima: FASE 5 — ChileCompra integration. |
+| Estado global | **FASE 0 aprobada · FASE 1-5 (Docker infra, Observability, Identity & security, Procurement domain, ChileCompra integration) implementadas** (2026-08-16). Próxima: FASE 6 — Incremental synchronization. |
 | Documentos rectores | `Master Prompt — OCI Local Simulator...md` (QUÉ construir) + MASTER PROMPT 2 (CÓMO construirlo — entregado por chat, ver §3.6 de este documento) |
 
 > **Instrucción para el asistente entrante:** lee este documento completo, luego `README.md`, `docs/ROADMAP.md` y `docs/architecture-review-package.md`. Con eso puedes asumir el rol sin preguntas repetitivas. Ante cualquier duda de detalle, la respuesta está en `docs/` — este proyecto se rige por el principio "el sistema debe comprenderse desde docs/ sin leer el código".
@@ -133,6 +133,7 @@ C:\ClaudeCowork\Agente_Compras_Agiles\
 │   ├── building-blocks/Ppip.BuildingBlocks.Domain/          ← FASE 4 (kernel DDD: Entity/AggregateRoot/ValueObject)
 │   ├── building-blocks/Ppip.BuildingBlocks.Messaging/       ← FASE 4 (EventEnvelope, Outbox/Idempotency — puertos)
 │   ├── modules/procurement/Ppip.Procurement.Domain/         ← FASE 4 (CompraAgil, SyncPolicy... sin infra, NFR-013)
+│   ├── modules/procurement/Ppip.Procurement.Infrastructure/ ← FASE 5 (ChileCompra: IChileCompraClient resiliente)
 │   ├── services/Ppip.PlatformApi/, workers/Ppip.{Sync,Document,Ai}Worker/  ← FASE 1, instrumentados en FASE 2+3
 │   └── apps/frontend/                ← FASE 1 (Angular 20.3)
 ├── docs/07-events/schemas/           ← FASE 4: JSON Schema de CompraAgilDetected/Updated.v1
@@ -142,6 +143,7 @@ C:\ClaudeCowork\Agente_Compras_Agiles\
 ├── tests/Ppip.Procurement.Domain.Tests/            ← FASE 4, xUnit (42 tests)
 ├── tests/Ppip.ArchitectureTests/                   ← FASE 4, NetArchTest.Rules (NFR-013, 4 tests)
 ├── tests/Ppip.Events.Contracts.Tests/              ← FASE 4, JsonSchema.Net (4 tests)
+├── tests/Ppip.Procurement.Infrastructure.Tests/    ← FASE 5, WireMock.Net contra fixtures reales (22 tests)
 └── _to_delete/                   ← tar.gz de entregas pasadas; el usuario puede borrarlo
 ```
 
@@ -162,20 +164,24 @@ C:\ClaudeCowork\Agente_Compras_Agiles\
 
 7. **FASE 4 — Procurement domain: IMPLEMENTADA (2026-08-16).** Kernel DDD compartido `Ppip.BuildingBlocks.Domain` (`Entity<TId>`, `AggregateRoot<TId>`, `ValueObject`, `IDomainEvent`); `Ppip.BuildingBlocks.Messaging` (`EventEnvelope<T>` con UUID v7 + routing key kebab-case, `OutboxMessage`, puertos `IOutboxStore`/`IIdempotencyStore` — sin adaptadores todavía, a propósito); dominio completo de **Procurement** (`Ppip.Procurement.Domain`: `CompraAgil`, `Institution`, `SyncExecution`, `SyncCheckpoint`, `RawCompraAgilPayload`, `SyncPolicy`) que implementa UC-001 pasos 6-9; JSON Schema de `CompraAgilDetected.v1`/`CompraAgilUpdated.v1`. 5 proyectos de test nuevos, 68 tests nuevos — **todos en verde al primer intento** (a diferencia de FASE 2/3, esta fase es dominio puro sin infraestructura real que validar, por diseño). La efectividad de `Ppip.ArchitectureTests` se verificó deliberadamente inyectando una violación (clase usando `MongoDB.Driver` dentro del dominio) y confirmando que el test la detecta y falla con el tipo exacto, antes de revertir.
 
+8. **FASE 5 — ChileCompra integration: IMPLEMENTADA (2026-08-16), con spike real ejecutado.** El usuario proporcionó un ticket personal de uso limitado (protegido en `.env`, nunca commiteado). `Ppip.Procurement.Infrastructure` (nuevo módulo): `IChileCompraClient` + `ChileCompraHttpClient` resiliente (Microsoft.Extensions.Http.Resilience/Polly: 3 intentos 1s/5s/25s, circuit breaker 5/30s→60s; **429 excluido del retry** porque es cuota diaria agotada, no falla transitoria); DTOs completos; `ChileCompraDateParser`. 22 contract tests (WireMock.Net) contra fixtures reales grabadas del spike (2 llamadas reales: 1 listado + 1 detalle, más los ejemplos de error literales de la Guía de Uso oficial — sin gastar cuota reproduciéndolos innecesariamente).
+
+**Contrato real: base URL `https://api2.mercadopublico.cl`, auth por header `ticket` (no query param), cuota DIARIA por ticket (no rate limit por minuto — corrige ASM-07).** 4 discrepancias reales vs. la documentación oficial encontradas por el spike (detalle en `docs/ROADMAP.md` nota de cierre de FASE 5): (1) `tamano_pagina` tiene mínimo 10 no documentado (encontrado en el primer intento, sin buscarlo). (2) Fechas en formatos inconsistentes incluso dentro del mismo objeto de respuesta (ISO-8601 vs. formato corto sin zona horaria) — los DTO guardan fechas como `string` crudo a propósito. (3) `id_orden_compra` aparece como campo raíz del payload, no anidado bajo `orden_compra.*` como documenta la guía. (4) Campos documentados como string llegan como número JSON (`documentos[].id`, `codigo_producto`) — se agregó `FlexibleStringConverter`.
+
+**OQ-01 y OQ-10 cerradas; OQ-09 y OQ-06/ASM-08 parcialmente informadas; OQ-02 sigue abierta** (existen documentos adjuntos reales, pero no se probó descarga — eso es FASE 7). Detalle en `docs/01-discovery/09-open-questions.md` y `07-assumptions.md`.
+
 Prompts y dominio de los otros 6 bounded contexts **todavía no existen** — se construyen en sus fases (Document Intelligence F7+, Knowledge/RAG F9+, Proposal F12+, Compliance F14, Audit F15).
 
 ### 5.2 Decisiones del usuario ya tomadas (no volver a preguntar)
-Idioma docs: español · repo en la raíz de la carpeta · cambios 1 y 2 como SHOULD · gate FASE 0→1 aprobado · recomendador heurístico ahora, ML después · outcomes manuales + API si el spike la confirma · notificaciones in-app + email digest (MailHog local).
+Idioma docs: español · repo en la raíz de la carpeta · cambios 1 y 2 como SHOULD · gate FASE 0→1 aprobado · recomendador heurístico ahora, ML después · outcomes manuales + API si el spike la confirma · notificaciones in-app + email digest (MailHog local) · el usuario ya entregó su ticket personal de ChileCompra (protegido en `.env`, ver §5.5).
 
 ### 5.3 La tarea inmediata
-**FASE 5 — ChileCompra integration:** client resiliente (`IChileCompraClient` + adaptador HTTP con circuit breaker/backoff) + contract tests (WireMock.NET) + **spike con la API real** que cierra OQ-01 (contrato/paginación reales), OQ-02 (descarga de adjuntos), OQ-10 (¿expone adjudicaciones/OC?) y valida ASM-01/ASM-08 (términos de uso). Requiere ticket/API key de ChileCompra (fuera del código, gestión del usuario). Entregable: fixtures reales grabados; manejo de errores probado.
+**FASE 6 — Incremental synchronization:** `SyncOrchestrator` (anti-corruption layer que mapea los DTOs crudos de `Ppip.Procurement.Infrastructure.ChileCompra` a los agregados de `Ppip.Procurement.Domain`, usando `SyncPolicy`/`ChileCompraDateParser` ya construidos) + `CheckpointStore` real (Mongo) + primer productor de eventos real (`CompraAgilDetected`/`Updated` vía outbox, cerrando por fin `Ppip.BuildingBlocks.Messaging`). Entregable: UC-001 completo e idempotente.
 
-Nota operativa para retomar el stack: `make up && make up-obs && make smoke && make smoke-obs`. Traefik puede fallar a bindear el puerto 80 si el host ya lo tiene ocupado (pasó en las sesiones de FASE 2 y 3, por otro proceso ajeno al proyecto) — no es un bug del compose; en ese caso los servicios de app siguen accesibles vía `docker exec <container> curl http://localhost:8080/...` o publicando temporalmente otro puerto. Para probar auth manualmente sin Traefik, agregar los headers `X-Forwarded-Host/Proto/Port` que Traefik normalmente añade (ver `infrastructure/docker/README.md`). Para el dominio de FASE 4 no hace falta levantar nada — `dotnet test tests/Ppip.Procurement.Domain.Tests` y `tests/Ppip.ArchitectureTests` corren sin Docker.
-
-En paralelo (preparación de FASE 5, puede adelantarse): conseguir el ticket/API key de ChileCompra y ejecutar el **spike** que cierra OQ-01 (contrato real y paginación), OQ-02 (descarga de adjuntos), OQ-10 (¿expone adjudicaciones/OC?) y valida ASM-01/ASM-08 (términos de uso).
+Nota operativa para retomar el stack: `make up && make up-obs && make smoke && make smoke-obs`. Traefik puede fallar a bindear el puerto 80 si el host ya lo tiene ocupado (pasó en las sesiones de FASE 2 y 3, por otro proceso ajeno al proyecto) — no es un bug del compose; en ese caso los servicios de app siguen accesibles vía `docker exec <container> curl http://localhost:8080/...` o publicando temporalmente otro puerto. Para probar auth manualmente sin Traefik, agregar los headers `X-Forwarded-Host/Proto/Port` que Traefik normalmente añade (ver `infrastructure/docker/README.md`). Para el dominio/infra de Procurement no hace falta levantar nada — `dotnet test tests/Ppip.Procurement.Domain.Tests`, `tests/Ppip.Procurement.Infrastructure.Tests` y `tests/Ppip.ArchitectureTests` corren sin Docker.
 
 ### 5.4 Riesgos y cuestiones abiertas a vigilar
-RSK-02 (alucinaciones — mitigación en cada capa), RSK-05 (sobreingeniería — resistir), RSK-12 (alcance MUST grande — gates), RSK-14 (cold start del score), OQ-03 (modelo de embeddings, decide dimensión de Qdrant en F9), OQ-09 (taxonomía de rubros para matching, F12).
+RSK-02 (alucinaciones — mitigación en cada capa), RSK-05 (sobreingeniería — resistir), RSK-12 (alcance MUST grande — gates), RSK-14 (cold start del score), OQ-02 (descarga de adjuntos, FASE 7), OQ-03 (modelo de embeddings, decide dimensión de Qdrant en F9), OQ-06/ASM-08 (revisión legal formal de términos de uso, sigue pendiente), OQ-09 (taxonomía de rubros para matching — `codigo_producto` parece UNSPSC, sin confirmar, F12).
 
 ### 5.5 Notas operativas del entorno (Cowork)
 - La carpeta del usuario está montada vía device bridge; **en la carpeta montada no se puede sobrescribir con tar ni borrar con rm** (unlink prohibido): extraer a `/tmp` y copiar con `cp -f`; para "borrar", mover a `_to_delete/`.

@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>Ppip.Procurement.Infrastructure</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- Versión flotante intencional (mismo criterio que los demás building
+         blocks/módulos): se fija exacta vía Central Package Management
+         cuando exista un pipeline de build real (FASE 4+ ya lo anunció). -->
+    <PackageReference Include="Microsoft.Extensions.Http.Resilience" Version="10.*" />
+  </ItemGroup>
+  <!-- No referencia a Ppip.Procurement.Domain a propósito: FASE 5 es solo el
+       cliente HTTP (puerto + adaptador resiliente); el mapeo a agregados de
+       dominio (anti-corruption layer, SyncOrchestrator) es FASE 6. -->
+</Project>

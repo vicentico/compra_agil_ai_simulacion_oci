@@ -1,0 +1,477 @@
+{
+    "success": "OK",
+    "trace": null,
+    "payload": {
+        "items": [
+            {
+                "codigo": "418-1191-COT26",
+                "nombre": "KCR-OLOPATADINA 0,2% (2 MG/ML) COLIRIO LIBRE DE PRESERVANTES REFERENCIA OLOF",
+                "estado": {
+                    "id_estado": 2,
+                    "codigo": "publicada",
+                    "glosa": "Publicada"
+                },
+                "convocatoria": {
+                    "estado_convocatoria": 1,
+                    "descripcion": "Primer llamado"
+                },
+                "documentos": [],
+                "fechas": {
+                    "fecha_publicacion": "2026-08-16 23:02",
+                    "fecha_cierre": "2026-08-18 08:30",
+                    "fecha_ultimo_cambio": "2026-08-16T23:05:02.410Z",
+                    "fecha_cierre_primer_llamado": "2026-08-18T08:30:00Z",
+                    "fecha_cierre_segundo_llamado": "2026-08-19T17:57:48.770Z"
+                },
+                "montos": {
+                    "moneda": "CLP",
+                    "monto_disponible": 2000000,
+                    "monto_disponible_clp": 2000000
+                },
+                "institucion": {
+                    "organismo_comprador": "SERVICIO NACIONAL DE SALUD HOSPITAL DE PUERTO AYSEN",
+                    "rut": "61.602.279-2",
+                    "unidad_compra": "H Puerto Ays\u00e9n",
+                    "region": 11,
+                    "nombre_region": "Regi\u00f3n Ays\u00e9n del General Carlos Ib\u00e1\u00f1ez del Campo"
+                },
+                "resumen": {
+                    "total_ofertas_recibidas": 0
+                },
+                "motivos": {
+                    "motivo_cancelacion": null,
+                    "motivo_desierta": null,
+                    "motivo_seleccion": null
+                },
+                "links": {
+                    "detalle": "/v2/compra-agil/418-1191-COT26"
+                }
+            },
+            {
+                "codigo": "418-1190-COT26",
+                "nombre": "KRC-ADALIMUMAB 40MG SOL.INY.JRP/AUTOINMUNE REFERENCIA YUFLYMA SOLUCI\u00d3N INYECTABLE 40 mg/0,4 mL",
+                "estado": {
+                    "id_estado": 2,
+                    "codigo": "publicada",
+                    "glosa": "Publicada"
+                },
+                "convocatoria": {
+                    "estado_convocatoria": 1,
+                    "descripcion": "Primer llamado"
+                },
+                "documentos": [],
+                "fechas": {
+                    "fecha_publicacion": "2026-08-16 22:55",
+                    "fecha_cierre": "2026-08-18 08:30",
+                    "fecha_ultimo_cambio": "2026-08-16T23:00:01.650Z",
+                    "fecha_cierre_primer_llamado": "2026-08-18T08:30:00Z",
+                    "fecha_cierre_segundo_llamado": "2026-08-19T18:04:17.537Z"
+                },
+                "montos": {
+                    "moneda": "CLP",
+                    "monto_disponible": 1500000,
+                    "monto_disponible_clp": 1500000
+                },
+                "institucion": {
+                    "organismo_comprador": "SERVICIO NACIONAL DE SALUD HOSPITAL DE PUERTO AYSEN",
+                    "rut": "61.602.279-2",
+                    "unidad_compra": "H Puerto Ays\u00e9n",
+                    "region": 11,
+                    "nombre_region": "Regi\u00f3n Ays\u00e9n del General Carlos Ib\u00e1\u00f1ez del Campo"
+                },
+                "resumen": {
+                    "total_ofertas_recibidas": 0
+                },
+                "motivos": {
+                    "motivo_cancelacion": null,
+                    "motivo_desierta": null,
+                    "motivo_seleccion": null
+                },
+                "links": {
+                    "detalle": "/v2/compra-agil/418-1190-COT26"
+                }
+            },
+            {
+                "codigo": "418-1189-COT26",
+                "nombre": "KCR-GABAPENTINA 300 MG CP/COMPRIMIDO RECUBIERTO",
+                "estado": {
+                    "id_estado": 2,
+                    "codigo": "publicada",
+                    "glosa": "Publicada"
+                },
+                "convocatoria": {
+                    "estado_convocatoria": 1,
+                    "descripcion": "Primer llamado"
+                },
+                "documentos": [],
+                "fechas": {
+                    "fecha_publicacion": "2026-08-16 22:51",
+                    "fecha_cierre": "2026-08-18 08:30",
+                    "fecha_ultimo_cambio": "2026-08-16T22:55:01.467Z",
+                    "fecha_cierre_primer_llamado": "2026-08-18T08:30:00Z",
+                    "fecha_cierre_segundo_llamado": "2026-08-19T18:08:35.547Z"
+                },
+                "montos": {
+                    "moneda": "CLP",
+                    "monto_disponible": 1000000,
+                    "monto_disponible_clp": 1000000
+                },
+                "institucion": {
+                    "organismo_comprador": "SERVICIO NACIONAL DE SALUD HOSPITAL DE PUERTO AYSEN",
+                    "rut": "61.602.279-2",
+                    "unidad_compra": "H Puerto Ays\u00e9n",
+                    "region": 11,
+                    "nombre_region": "Regi\u00f3n Ays\u00e9n del General Carlos Ib\u00e1\u00f1ez del Campo"
+                },
+                "resumen": {
+                    "total_ofertas_recibidas": 0
+                },
+                "motivos": {
+                    "motivo_cancelacion": null,
+                    "motivo_desierta": null,
+                    "motivo_seleccion": null
+                },
+                "links": {
+                    "detalle": "/v2/compra-agil/418-1189-COT26"
+                }
+            },
+            {
+                "codigo": "418-1188-COT26",
+                "nombre": "KCR-LEVOTIROXINA 75 MCG CM",
+                "estado": {
+                    "id_estado": 2,
+                    "codigo": "publicada",
+                    "glosa": "Publicada"
+                },
+                "convocatoria": {
+                    "estado_convocatoria": 1,
+                    "descripcion": "Primer llamado"
+                },
+                "documentos": [],
+                "fechas": {
+                    "fecha_publicacion": "2026-08-16 22:40",
+                    "fecha_cierre": "2026-08-18 08:30",
+                    "fecha_ultimo_cambio": "2026-08-16T22:45:01.180Z",
+                    "fecha_cierre_primer_llamado": "2026-08-18T08:30:00Z",
+                    "fecha_cierre_segundo_llamado": "2026-08-19T18:19:47.160Z"
+                },
+                "montos": {
+                    "moneda": "CLP",
+                    "monto_disponible": 100000,
+                    "monto_disponible_clp": 100000
+                },
+                "institucion": {
+                    "organismo_comprador": "SERVICIO NACIONAL DE SALUD HOSPITAL DE PUERTO AYSEN",
+                    "rut": "61.602.279-2",
+                    "unidad_compra": "H Puerto Ays\u00e9n",
+                    "region": 11,
+                    "nombre_region": "Regi\u00f3n Ays\u00e9n del General Carlos Ib\u00e1\u00f1ez del Campo"
+                },
+                "resumen": {
+                    "total_ofertas_recibidas": 0
+                },
+                "motivos": {
+                    "motivo_cancelacion": null,
+                    "motivo_desierta": null,
+                    "motivo_seleccion": null
+                },
+                "links": {
+                    "detalle": "/v2/compra-agil/418-1188-COT26"
+                }
+            },
+            {
+                "codigo": "418-1187-COT26",
+                "nombre": "KCR-LEVOTIROXINA 50 MCG COMPRIMIDO",
+                "estado": {
+                    "id_estado": 2,
+                    "codigo": "publicada",
+                    "glosa": "Publicada"
+                },
+                "convocatoria": {
+                    "estado_convocatoria": 1,
+                    "descripcion": "Primer llamado"
+                },
+                "documentos": [],
+                "fechas": {
+                    "fecha_publicacion": "2026-08-16 22:36",
+                    "fecha_cierre": "2026-08-18 08:30",
+                    "fecha_ultimo_cambio": "2026-08-16T22:40:00.653Z",
+                    "fecha_cierre_primer_llamado": "2026-08-18T08:30:00Z",
+                    "fecha_cierre_segundo_llamado": "2026-08-19T18:23:58.963Z"
+                },
+                "montos": {
+                    "moneda": "CLP",
+                    "monto_disponible": 300000,
+                    "monto_disponible_clp": 300000
+                },
+                "institucion": {
+                    "organismo_comprador": "SERVICIO NACIONAL DE SALUD HOSPITAL DE PUERTO AYSEN",
+                    "rut": "61.602.279-2",
+                    "unidad_compra": "H Puerto Ays\u00e9n",
+                    "region": 11,
+                    "nombre_region": "Regi\u00f3n Ays\u00e9n del General Carlos Ib\u00e1\u00f1ez del Campo"
+                },
+                "resumen": {
+                    "total_ofertas_recibidas": 0
+                },
+                "motivos": {
+                    "motivo_cancelacion": null,
+                    "motivo_desierta": null,
+                    "motivo_seleccion": null
+                },
+                "links": {
+                    "detalle": "/v2/compra-agil/418-1187-COT26"
+                }
+            },
+            {
+                "codigo": "418-1186-COT26",
+                "nombre": "KCR-HIALURONATO 0,15 % SOLUCI\u00d3N OFT\u00c1LMICA FC",
+                "estado": {
+                    "id_estado": 2,
+                    "codigo": "publicada",
+                    "glosa": "Publicada"
+                },
+                "convocatoria": {
+                    "estado_convocatoria": 1,
+                    "descripcion": "Primer llamado"
+                },
+                "documentos": [],
+                "fechas": {
+                    "fecha_publicacion": "2026-08-16 22:27",
+                    "fecha_cierre": "2026-08-18 08:30",
+                    "fecha_ultimo_cambio": "2026-08-16T22:30:00.973Z",
+                    "fecha_cierre_primer_llamado": "2026-08-18T08:30:00Z",
+                    "fecha_cierre_segundo_llamado": "2026-08-19T18:32:51.293Z"
+                },
+                "montos": {
+                    "moneda": "CLP",
+                    "monto_disponible": 2500000,
+                    "monto_disponible_clp": 2500000
+                },
+                "institucion": {
+                    "organismo_comprador": "SERVICIO NACIONAL DE SALUD HOSPITAL DE PUERTO AYSEN",
+                    "rut": "61.602.279-2",
+                    "unidad_compra": "H Puerto Ays\u00e9n",
+                    "region": 11,
+                    "nombre_region": "Regi\u00f3n Ays\u00e9n del General Carlos Ib\u00e1\u00f1ez del Campo"
+                },
+                "resumen": {
+                    "total_ofertas_recibidas": 0
+                },
+                "motivos": {
+                    "motivo_cancelacion": null,
+                    "motivo_desierta": null,
+                    "motivo_seleccion": null
+                },
+                "links": {
+                    "detalle": "/v2/compra-agil/418-1186-COT26"
+                }
+            },
+            {
+                "codigo": "1461-23-COT26",
+                "nombre": "VESTUARIO INSTITUCIONAL PARA GET",
+                "estado": {
+                    "id_estado": 2,
+                    "codigo": "publicada",
+                    "glosa": "Publicada"
+                },
+                "convocatoria": {
+                    "estado_convocatoria": 1,
+                    "descripcion": "Primer llamado"
+                },
+                "documentos": [
+                    {
+                        "id": 1783807,
+                        "nombre": "S.ADQ 65 - DPP GET - INSTRUCTIVO SERIGRAFIA.pdf"
+                    },
+                    {
+                        "id": 1783808,
+                        "nombre": "S.ADQ 65 - DPP GET - TERMINOS DE REFERENCIA.pdf"
+                    }
+                ],
+                "fechas": {
+                    "fecha_publicacion": "2026-08-16 22:17",
+                    "fecha_cierre": "2026-08-18 07:30",
+                    "fecha_ultimo_cambio": "2026-08-16T22:20:01.043Z",
+                    "fecha_cierre_primer_llamado": "2026-08-18T07:30:00Z",
+                    "fecha_cierre_segundo_llamado": "2026-08-19T16:42:43.010Z"
+                },
+                "montos": {
+                    "moneda": "CLP",
+                    "monto_disponible": 250000,
+                    "monto_disponible_clp": 250000
+                },
+                "institucion": {
+                    "organismo_comprador": "DELEGACI\u00d3N PRESIDENCIAL PROVINCIAL DE MAIPO",
+                    "rut": "60.511.136-k",
+                    "unidad_compra": "DELEGACION PRESIDENCIAL PROVINCIAL DE MAIPO",
+                    "region": 13,
+                    "nombre_region": "Regi\u00f3n Metropolitana de Santiago"
+                },
+                "resumen": {
+                    "total_ofertas_recibidas": 0
+                },
+                "motivos": {
+                    "motivo_cancelacion": null,
+                    "motivo_desierta": null,
+                    "motivo_seleccion": null
+                },
+                "links": {
+                    "detalle": "/v2/compra-agil/1461-23-COT26"
+                }
+            },
+            {
+                "codigo": "418-1185-COT26",
+                "nombre": "KCR-IBUPROFENO 100 MG/5 ML SUSP 100 ML",
+                "estado": {
+                    "id_estado": 2,
+                    "codigo": "publicada",
+                    "glosa": "Publicada"
+                },
+                "convocatoria": {
+                    "estado_convocatoria": 1,
+                    "descripcion": "Primer llamado"
+                },
+                "documentos": [],
+                "fechas": {
+                    "fecha_publicacion": "2026-08-16 22:16",
+                    "fecha_cierre": "2026-08-18 08:30",
+                    "fecha_ultimo_cambio": "2026-08-16T22:20:01.043Z",
+                    "fecha_cierre_primer_llamado": "2026-08-18T08:30:00Z",
+                    "fecha_cierre_segundo_llamado": "2026-08-19T18:43:41.967Z"
+                },
+                "montos": {
+                    "moneda": "CLP",
+                    "monto_disponible": 1500000,
+                    "monto_disponible_clp": 1500000
+                },
+                "institucion": {
+                    "organismo_comprador": "SERVICIO NACIONAL DE SALUD HOSPITAL DE PUERTO AYSEN",
+                    "rut": "61.602.279-2",
+                    "unidad_compra": "H Puerto Ays\u00e9n",
+                    "region": 11,
+                    "nombre_region": "Regi\u00f3n Ays\u00e9n del General Carlos Ib\u00e1\u00f1ez del Campo"
+                },
+                "resumen": {
+                    "total_ofertas_recibidas": 0
+                },
+                "motivos": {
+                    "motivo_cancelacion": null,
+                    "motivo_desierta": null,
+                    "motivo_seleccion": null
+                },
+                "links": {
+                    "detalle": "/v2/compra-agil/418-1185-COT26"
+                }
+            },
+            {
+                "codigo": "418-1184-COT26",
+                "nombre": "KCR-GLIBENCLAMIDA 5 MG COMPRIMIDO",
+                "estado": {
+                    "id_estado": 2,
+                    "codigo": "publicada",
+                    "glosa": "Publicada"
+                },
+                "convocatoria": {
+                    "estado_convocatoria": 1,
+                    "descripcion": "Primer llamado"
+                },
+                "documentos": [],
+                "fechas": {
+                    "fecha_publicacion": "2026-08-16 22:05",
+                    "fecha_cierre": "2026-08-18 08:30",
+                    "fecha_ultimo_cambio": "2026-08-16T22:10:00.310Z",
+                    "fecha_cierre_primer_llamado": "2026-08-18T08:30:00Z",
+                    "fecha_cierre_segundo_llamado": "2026-08-19T18:54:53.547Z"
+                },
+                "montos": {
+                    "moneda": "CLP",
+                    "monto_disponible": 250000,
+                    "monto_disponible_clp": 250000
+                },
+                "institucion": {
+                    "organismo_comprador": "SERVICIO NACIONAL DE SALUD HOSPITAL DE PUERTO AYSEN",
+                    "rut": "61.602.279-2",
+                    "unidad_compra": "H Puerto Ays\u00e9n",
+                    "region": 11,
+                    "nombre_region": "Regi\u00f3n Ays\u00e9n del General Carlos Ib\u00e1\u00f1ez del Campo"
+                },
+                "resumen": {
+                    "total_ofertas_recibidas": 0
+                },
+                "motivos": {
+                    "motivo_cancelacion": null,
+                    "motivo_desierta": null,
+                    "motivo_seleccion": null
+                },
+                "links": {
+                    "detalle": "/v2/compra-agil/418-1184-COT26"
+                }
+            },
+            {
+                "codigo": "1417-124-COT26",
+                "nombre": "Vehiculo de servicio",
+                "estado": {
+                    "id_estado": 2,
+                    "codigo": "publicada",
+                    "glosa": "Publicada"
+                },
+                "convocatoria": {
+                    "estado_convocatoria": 1,
+                    "descripcion": "Primer llamado"
+                },
+                "documentos": [
+                    {
+                        "id": 1783804,
+                        "nombre": "Criterio Sustentables para Proveedores (Anexo 2).pdf"
+                    },
+                    {
+                        "id": 1783805,
+                        "nombre": "Pauta de Evaluaci\u00f3n (Anexo 1).pdf"
+                    },
+                    {
+                        "id": 1783806,
+                        "nombre": "Requerimientos T\u00e9cnicos - Administrativos.pdf"
+                    }
+                ],
+                "fechas": {
+                    "fecha_publicacion": "2026-08-16 22:00",
+                    "fecha_cierre": "2026-08-17 22:01",
+                    "fecha_ultimo_cambio": "2026-08-16T22:05:01.090Z",
+                    "fecha_cierre_primer_llamado": "2026-08-17T22:01:00Z",
+                    "fecha_cierre_segundo_llamado": "2026-08-18T22:01:34.467Z"
+                },
+                "montos": {
+                    "moneda": "CLP",
+                    "monto_disponible": 900000,
+                    "monto_disponible_clp": 900000
+                },
+                "institucion": {
+                    "organismo_comprador": "DIRECCION GENERAL DE AERONAUTICA CIVIL",
+                    "rut": "61.104.000-8",
+                    "unidad_compra": "UNIDAD DE COMPRA ANTOFAGASTA",
+                    "region": 2,
+                    "nombre_region": "Regi\u00f3n de Antofagasta "
+                },
+                "resumen": {
+                    "total_ofertas_recibidas": 0
+                },
+                "motivos": {
+                    "motivo_cancelacion": null,
+                    "motivo_desierta": null,
+                    "motivo_seleccion": null
+                },
+                "links": {
+                    "detalle": "/v2/compra-agil/1417-124-COT26"
+                }
+            }
+        ],
+        "paginacion": {
+            "total_paginas": 70,
+            "numero_pagina": 1,
+            "tamano_pagina": 10,
+            "total_resultados": 700
+        }
+    },
+    "errors": null
+}
