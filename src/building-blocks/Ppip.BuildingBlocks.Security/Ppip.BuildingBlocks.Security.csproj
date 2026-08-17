@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>Ppip.BuildingBlocks.Security</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- Versión flotante intencional para el esqueleto de FASE 3 (mismo
+         criterio que los demás building blocks): se fija exacta vía Central
+         Package Management cuando exista un pipeline de build real (FASE 4+). -->
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.*" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,212 @@
+{
+  "realm": "ppip",
+  "enabled": true,
+  "sslRequired": "none",
+  "registrationAllowed": false,
+  "roles": {
+    "realm": [
+      {
+        "name": "viewer",
+        "description": "Solo lectura (compras, documentos, analisis, RAG, oportunidades, notificaciones)."
+      },
+      {
+        "name": "analyst",
+        "description": "viewer + re-ejecutar analisis/reprocesar documentos, resolver revisiones, ver trazabilidad/auditoria.",
+        "composite": true,
+        "composites": {
+          "realm": [
+            "viewer"
+          ]
+        }
+      },
+      {
+        "name": "editor",
+        "description": "analyst + crear/editar propuestas, compliance, outcomes.",
+        "composite": true,
+        "composites": {
+          "realm": [
+            "analyst"
+          ]
+        }
+      },
+      {
+        "name": "admin",
+        "description": "editor + sync manual, perfil de empresa, plantillas, configuracion, pesos del score.",
+        "composite": true,
+        "composites": {
+          "realm": [
+            "editor"
+          ]
+        }
+      },
+      {
+        "name": "superadmin",
+        "description": "admin + gestion exclusiva de cuotas API / throttling (FR-066, ADR-010 Amendment).",
+        "composite": true,
+        "composites": {
+          "realm": [
+            "admin"
+          ]
+        }
+      }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "ppip-spa",
+      "name": "PPIP Angular SPA",
+      "enabled": true,
+      "publicClient": true,
+      "protocol": "openid-connect",
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "redirectUris": [
+        "http://ppip.localhost/*",
+        "http://localhost:4200/*"
+      ],
+      "webOrigins": [
+        "http://ppip.localhost",
+        "http://localhost:4200"
+      ],
+      "attributes": {
+        "pkce.code.challenge.method": "S256"
+      },
+      "protocolMappers": [
+        {
+          "name": "ppip-api-audience",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "consentRequired": false,
+          "config": {
+            "included.custom.audience": "ppip-platform-api",
+            "id.token.claim": "false",
+            "access.token.claim": "true"
+          }
+        }
+      ]
+    },
+    {
+      "clientId": "ppip-test-client",
+      "name": "PPIP AuthZ test client (solo tests automatizados, no produccion)",
+      "enabled": true,
+      "publicClient": false,
+      "protocol": "openid-connect",
+      "secret": "ppip-test-client-secret-not-for-production",
+      "standardFlowEnabled": false,
+      "directAccessGrantsEnabled": true,
+      "serviceAccountsEnabled": false,
+      "protocolMappers": [
+        {
+          "name": "ppip-api-audience",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "consentRequired": false,
+          "config": {
+            "included.custom.audience": "ppip-platform-api",
+            "id.token.claim": "false",
+            "access.token.claim": "true"
+          }
+        }
+      ]
+    }
+  ],
+  "users": [
+    {
+      "username": "viewer.test",
+      "enabled": true,
+      "email": "viewer.test@ppip.local",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "PpipTest123!",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "viewer"
+      ],
+      "emailVerified": true,
+      "requiredActions": [],
+      "firstName": "Viewer",
+      "lastName": "Test"
+    },
+    {
+      "username": "analyst.test",
+      "enabled": true,
+      "email": "analyst.test@ppip.local",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "PpipTest123!",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "analyst"
+      ],
+      "emailVerified": true,
+      "requiredActions": [],
+      "firstName": "Analyst",
+      "lastName": "Test"
+    },
+    {
+      "username": "editor.test",
+      "enabled": true,
+      "email": "editor.test@ppip.local",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "PpipTest123!",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "editor"
+      ],
+      "emailVerified": true,
+      "requiredActions": [],
+      "firstName": "Editor",
+      "lastName": "Test"
+    },
+    {
+      "username": "admin.test",
+      "enabled": true,
+      "email": "admin.test@ppip.local",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "PpipTest123!",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "admin"
+      ],
+      "emailVerified": true,
+      "requiredActions": [],
+      "firstName": "Admin",
+      "lastName": "Test"
+    },
+    {
+      "username": "superadmin.test",
+      "enabled": true,
+      "email": "superadmin.test@ppip.local",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "PpipTest123!",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "superadmin"
+      ],
+      "emailVerified": true,
+      "requiredActions": [],
+      "firstName": "Superadmin",
+      "lastName": "Test"
+    }
+  ]
+}

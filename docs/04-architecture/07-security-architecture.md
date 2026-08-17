@@ -27,3 +27,5 @@ flowchart LR
 5. **IA**: system prompt fijo y separado del contexto documental; instrucción anti-injection explícita; salida validada por schema (nunca ejecutable); sin herramientas invocables desde contenido de documentos.
 6. **Red**: segmentación Docker (data sin acceso desde edge); servicios de datos sin puertos publicados en producción-like.
 7. **Auditoría**: toda operación sensible → AuditEvent inmutable.
+
+Implementación de identidad (capa 2, FASE 3): `infrastructure/docker/config/keycloak/ppip-realm.json` + `Ppip.BuildingBlocks.Security`. Nota de despliegue: el contenedor `keycloak` necesita un alias de red igual a `KC_HOSTNAME` (`auth.${PPIP_DOMAIN}`) en la red `app` — con `KC_HOSTNAME_STRICT=false`, Keycloak embebe ese hostname en todas sus URLs propias (issuer, `jwks_uri`), y sin el alias esas URLs no resolverían desde otros contenedores. Detalle: `docs/ROADMAP.md` nota de cierre de FASE 3.

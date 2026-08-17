@@ -1,7 +1,10 @@
-# Configuración dinámica de Traefik: middlewares transversales (FASE 1).
-# El TLS real y el WAF/rate-limit de borde se completan en FASE 3 (seguridad)
-# — aquí solo se documenta la estructura para que FASE 3 la complete sin
-# reescribir el edge.
+# Configuración dinámica de Traefik: middlewares transversales.
+# TLS real queda fuera de alcance del POC local (http-only, ver FASE 19 para
+# producción/OCI). Rate limit agregado en FASE 3 (docs/12-security/01,
+# T5 del threat model) — por IP de origen; por-usuario-autenticado requeriría
+# forwardAuth extrayendo el claim `sub` a un header, diferido explícitamente
+# (no hay todavía ningún endpoint cuyo abuso por usuario individual, en vez
+# de por IP, sea un riesgo medido — se revisita si aparece esa necesidad).
 http:
   middlewares:
     ppip-security-headers:
@@ -10,3 +13,7 @@ http:
         contentTypeNosniff: true
         browserXssFilter: true
         customFrameOptionsValue: "SAMEORIGIN"
+    ppip-rate-limit:
+      rateLimit:
+        average: 20   # requests/segundo sostenidas, por IP de origen
+        burst: 40

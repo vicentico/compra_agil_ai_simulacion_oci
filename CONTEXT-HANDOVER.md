@@ -7,7 +7,7 @@
 | Rol que se traspasa | Tech Lead / Arquitecto del proyecto (agente IA con supervisión del usuario) |
 | Ubicación del repositorio | `C:\ClaudeCowork\Agente_Compras_Agiles` (raíz del repo = carpeta del proyecto) |
 | Sesión de origen | Claude Cowork, modelo configurado `claude-fable-5` |
-| Estado global | **FASE 0 aprobada · FASE 1 (Docker infrastructure) implementada · FASE 2 (Observability foundation) implementada y validada end-to-end** (2026-08-16). Próxima: FASE 3 — Identity & security. |
+| Estado global | **FASE 0 aprobada · FASE 1 (Docker infrastructure) · FASE 2 (Observability) · FASE 3 (Identity & security) implementadas y validadas end-to-end** (2026-08-16). Próxima: FASE 4 — Procurement domain. |
 | Documentos rectores | `Master Prompt — OCI Local Simulator...md` (QUÉ construir) + MASTER PROMPT 2 (CÓMO construirlo — entregado por chat, ver §3.6 de este documento) |
 
 > **Instrucción para el asistente entrante:** lee este documento completo, luego `README.md`, `docs/ROADMAP.md` y `docs/architecture-review-package.md`. Con eso puedes asumir el rol sin preguntas repetitivas. Ante cualquier duda de detalle, la respuesta está en `docs/` — este proyecto se rige por el principio "el sistema debe comprenderse desde docs/ sin leer el código".
@@ -123,14 +123,17 @@ C:\ClaudeCowork\Agente_Compras_Agiles\
 │   └── 18-traceability/          ← matriz FR→UC→componente→API/evento→código→test→doc
 ├── prompts/  (system/analysis/requirements/rag/proposal/compliance — README, se pobla en F9-10)
 ├── evaluation/ scripts/                              ← stubs con README; se implementan por fase
-├── infrastructure/docker/            ← FASE 1+2: compose (perfiles core/app/obs/demo) + config/
-│   └── config/{otel-collector,prometheus,loki,tempo,grafana}/  ← FASE 2
+├── infrastructure/docker/            ← FASE 1+2+3: compose (perfiles core/app/obs/demo) + config/
+│   ├── config/{otel-collector,prometheus,loki,tempo,grafana}/  ← FASE 2
+│   └── config/keycloak/ppip-realm.json                          ← FASE 3 (realm + 5 roles compuestos)
 ├── src/
 │   ├── building-blocks/Ppip.BuildingBlocks.Health/          ← FASE 1
 │   ├── building-blocks/Ppip.BuildingBlocks.Observability/   ← FASE 2 (OTel + CorrelationId)
-│   ├── services/Ppip.PlatformApi/, workers/Ppip.{Sync,Document,Ai}Worker/  ← FASE 1, instrumentados en FASE 2
+│   ├── building-blocks/Ppip.BuildingBlocks.Security/        ← FASE 3 (JWT + RBAC contra Keycloak)
+│   ├── services/Ppip.PlatformApi/, workers/Ppip.{Sync,Document,Ai}Worker/  ← FASE 1, instrumentados en FASE 2+3
 │   └── apps/frontend/                ← FASE 1 (Angular 20.3)
 ├── tests/Ppip.BuildingBlocks.Observability.Tests/  ← FASE 2, xUnit (4 tests, CorrelationIdMiddleware)
+├── tests/Ppip.PlatformApi.Tests/                   ← FASE 3, xUnit (12 tests, RBAC vs Keycloak real/Testcontainers)
 └── _to_delete/                   ← tar.gz de entregas pasadas; el usuario puede borrarlo
 ```
 
@@ -143,7 +146,11 @@ C:\ClaudeCowork\Agente_Compras_Agiles\
 4. **FASE 1 — Docker infrastructure: IMPLEMENTADA (2026-08-16).** `infrastructure/docker/docker-compose.yml` (perfiles core/app/obs/demo, redes edge/app/data/obs) + override de dev; esqueletos .NET 10 `Ppip.PlatformApi`/`Ppip.SyncWorker`/`Ppip.DocumentWorker`/`Ppip.AiWorker` con `/health`+`/ready` (dependencias reales); `Ppip.BuildingBlocks.Health` compartido; frontend Angular 20.3 (CLI oficial, build+3 tests en verde); `Makefile` + `scripts/smoke-test.sh`. Deliberadamente fuera de esta fase: seeding real (placeholder que falla explícito), usuarios Mongo de mínimo privilegio (FASE 4+).
 5. **FASE 2 — Observability foundation: IMPLEMENTADA Y VALIDADA END-TO-END (2026-08-16).** Perfil `obs` (OTel Collector, Prometheus, Loki, Tempo, Grafana); `Ppip.BuildingBlocks.Observability` (OTel traces+métricas+logs vía OTLP, `CorrelationIdMiddleware`+`CorrelationIdDelegatingHandler`) referenciado desde los 4 servicios; endpoint temporal `GET /api/diagnostics/trace-check` en Platform API; dashboard `PPIP - Service Overview` (5 paneles) provisionado en Grafana; Tempo elegido sobre Jaeger (ADR-011 Amendment); 4 tests xUnit para `CorrelationIdMiddleware`. **Este entorno sí tenía Docker Desktop + .NET 10 SDK reales** (a diferencia del que generó FASE 1) y se usó para validar de punta a punta: `docker compose up -d` con los 3 perfiles, `/api/diagnostics/trace-check` devolvió 200, el mismo `traceId` apareció con 7 spans en Tempo y el mismo `traceId`+`correlationId` en los logs de Loki, Prometheus mostró métricas separadas por servicio, Grafana provisionó datasources+dashboard correctamente. Deliberadamente fuera de esta fase: los 4 dashboards de negocio y las alertas iniciales (dependen de métricas `ppip_*` inexistentes hasta sus fases), correlationId en eventos RabbitMQ (ningún worker publica eventos reales todavía).
 
-**Bugs pre-existentes de FASE 1 encontrados y corregidos al validar con herramientas reales (ver `docs/ROADMAP.md` para el detalle completo de los 6):** `Ppip.BuildingBlocks.Health` sin `FrameworkReference` a ASP.NET Core; 3 registros `AddCheck` con una sobrecarga inexistente (→ `AddTypeActivatedCheck`); los 4 Dockerfiles no copiaban `Directory.Build.props`/`global.json` (`TargetFramework` vacío) y creaban un usuario con UID que colisiona con el `app`/`$APP_UID` que ya trae la imagen base; `Makefile`/`smoke-test.sh` nunca cargaban `docker-compose.override.yml` (puertos de dev nunca se publicaban); Prometheus sin `honor_labels: true` (colisión de la label `job`); provisioning de Grafana sin escapar `$` (`${__value.raw}` se guardaba vacío). Ninguno era parte del alcance nuevo de FASE 2, pero todos bloqueaban validar cualquier cosa — corregidos como prerrequisito.
+**Bugs pre-existentes de FASE 1 encontrados y corregidos al validar con herramientas reales (ver `docs/ROADMAP.md` nota de cierre de FASE 2 para el detalle completo de los 6):** `Ppip.BuildingBlocks.Health` sin `FrameworkReference` a ASP.NET Core; 3 registros `AddCheck` con una sobrecarga inexistente (→ `AddTypeActivatedCheck`); los 4 Dockerfiles no copiaban `Directory.Build.props`/`global.json` (`TargetFramework` vacío) y creaban un usuario con UID que colisiona con el `app`/`$APP_UID` que ya trae la imagen base; `Makefile`/`smoke-test.sh` nunca cargaban `docker-compose.override.yml` (puertos de dev nunca se publicaban); Prometheus sin `honor_labels: true` (colisión de la label `job`); provisioning de Grafana sin escapar `$` (`${__value.raw}` se guardaba vacío). Ninguno era parte del alcance nuevo de FASE 2, pero todos bloqueaban validar cualquier cosa — corregidos como prerrequisito.
+
+6. **FASE 3 — Identity & security: IMPLEMENTADA Y VALIDADA END-TO-END (2026-08-16).** Realm Keycloak `ppip` con 5 roles **compuestos** (`viewer<analyst<editor<admin<superadmin` — jerarquía resuelta por Keycloak, sin comparación de rango en .NET); `Ppip.BuildingBlocks.Security` (JWT+RBAC) en Platform API; 2 endpoints protegidos (`whoami`=viewer, `trace-check`=analyst); rate limit por IP + security headers en Traefik. 12 tests xUnit contra un Keycloak real (Testcontainers, mismo `ppip-realm.json` que docker-compose) — no un doble.
+
+**Esta fase encontró y corrigió 3 bugs no obvios que solo aparecen validando contra Keycloak real** (detalle completo en `docs/ROADMAP.md` nota de cierre de FASE 3 — vale la pena leerlo antes de tocar auth): (1) Keycloak 26 evalúa `VERIFY_PROFILE` dinámicamente en cada login — usuarios sin `firstName`/`lastName` fallan con "Account is not fully set up" aunque `requiredActions` esté vacío. (2) Leer `builder.Configuration` de forma síncrona en `Program.cs` captura valores **anteriores** al override de `WebApplicationFactory` en tests — hay que configurar options vía `AddOptions<T>().Configure<IConfiguration>(...)` (resolución perezosa), no leyendo config directo en el método de extensión. (3) Con `KC_HOSTNAME_STRICT=false`, Keycloak embebe su hostname externo (`auth.*.localhost`) en `jwks_uri` sin importar por qué DNS se lo pidieron — y varios clientes HTTP resuelven `*.localhost` siempre a loopback (RFC 6761), así que seguir esa URL termina conectando al propio servicio, no a Keycloak. Se corrigió con un alias de red Docker + un `ConnectCallback` que fuerza la conexión física al host:puerto real de Keycloak.
 
 Prompts y lógica de dominio real **todavía no existen** — eso es FASE 4+.
 
@@ -151,9 +158,9 @@ Prompts y lógica de dominio real **todavía no existen** — eso es FASE 4+.
 Idioma docs: español · repo en la raíz de la carpeta · cambios 1 y 2 como SHOULD · gate FASE 0→1 aprobado · recomendador heurístico ahora, ML después · outcomes manuales + API si el spike la confirma · notificaciones in-app + email digest (MailHog local).
 
 ### 5.3 La tarea inmediata
-**FASE 3 — Identity & security:** realm Keycloak `ppip`, 5 roles, JWT en Platform API, matriz RBAC con tests de autorización, secretos vía Docker secrets/.env, rate limiting en Traefik.
+**FASE 4 — Procurement domain:** dominio + building blocks (outbox, envelope de eventos, idempotencia) + architecture tests. Entregable: dominio testeado sin infraestructura.
 
-Nota operativa para retomar el stack: `make up && make up-obs && make smoke && make smoke-obs`. Traefik puede fallar a bindear el puerto 80 si el host ya lo tiene ocupado (pasó en la sesión de FASE 2, por otro proceso ajeno al proyecto) — no es un bug del compose; en ese caso los servicios de app siguen accesibles vía `docker exec <container> curl http://localhost:8080/...` o publicando temporalmente otro puerto.
+Nota operativa para retomar el stack: `make up && make up-obs && make smoke && make smoke-obs`. Traefik puede fallar a bindear el puerto 80 si el host ya lo tiene ocupado (pasó en las sesiones de FASE 2 y 3, por otro proceso ajeno al proyecto) — no es un bug del compose; en ese caso los servicios de app siguen accesibles vía `docker exec <container> curl http://localhost:8080/...` o publicando temporalmente otro puerto. Para probar auth manualmente sin Traefik, agregar los headers `X-Forwarded-Host/Proto/Port` que Traefik normalmente añade (ver `infrastructure/docker/README.md`).
 
 En paralelo (preparación de FASE 5, puede adelantarse): conseguir el ticket/API key de ChileCompra y ejecutar el **spike** que cierra OQ-01 (contrato real y paginación), OQ-02 (descarga de adjuntos), OQ-10 (¿expone adjudicaciones/OC?) y valida ASM-01/ASM-08 (términos de uso).
 
@@ -170,4 +177,4 @@ RSK-02 (alucinaciones — mitigación en cada capa), RSK-05 (sobreingeniería �
 El registro npm ya publica Angular 22 estable (2026-08). Se implementó el frontend en **Angular 20.3.x** por ser la versión ya documentada en el stack (ARCHITECTURE.md) — no se saltó de versión sin ADR. Si el equipo quiere adoptar 22, requiere una decisión explícita, no un cambio silencioso de un scaffold.
 
 ---
-*Fin del handover. El asistente entrante debe confirmar lectura de README + ROADMAP + `infrastructure/docker/README.md` y proceder con la tarea inmediata #1 (verificar FASE 1 con Docker/SDK reales) siguiendo el formato de respuesta §49.*
+*Fin del handover. El asistente entrante debe confirmar lectura de README + ROADMAP + `infrastructure/docker/README.md` y proceder con la tarea inmediata (§5.3, FASE 4) siguiendo el formato de respuesta §49.*

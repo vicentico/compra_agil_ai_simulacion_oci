@@ -163,7 +163,9 @@ services:
     <<: *service-defaults
     image: quay.io/keycloak/keycloak:26.0
     profiles: ["core"]
-    command: start-dev --health-enabled=true --http-relative-path=/
+    # --import-realm (FASE 3): importa infrastructure/docker/config/keycloak/ppip-realm.json
+    # al arrancar; no reimporta si el realm "ppip" ya existe (idempotente).
+    command: start-dev --health-enabled=true --http-relative-path=/ --import-realm
     environment:
       KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_ADMIN_USER}
       KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
@@ -173,7 +175,19 @@ services:
       KC_PROXY_HEADERS: xforwarded
     volumes:
       - keycloak_data:/opt/keycloak/data
-    networks: [edge, app]
+      - ./config/keycloak/ppip-realm.json:/opt/keycloak/data/import/ppip-realm.json:ro
+    networks:
+      edge:
+      # Alias DNS = KC_HOSTNAME: Keycloak con KC_HOSTNAME_STRICT=false genera
+      # TODAS sus URLs propias (issuer, jwks_uri, token_endpoint...) usando
+      # KC_HOSTNAME, nunca el nombre del contenedor — sin este alias,
+      # "auth.${PPIP_DOMAIN}" (solo resuelto por el navegador vía RFC 6761)
+      # no resolvería para otros contenedores, y el fetch del JWKS de
+      # Platform API fallaría en silencio (FASE 3, encontrado validando
+      # end-to-end contra el stack real).
+      app:
+        aliases:
+          - auth.${PPIP_DOMAIN}
     labels:
       traefik.enable: "true"
       traefik.http.routers.keycloak.rule: Host(`auth.${PPIP_DOMAIN}`)
@@ -204,6 +218,14 @@ services:
       Ppip__Qdrant__Endpoint: http://qdrant:6333
       Ppip__Cors__AllowedOrigins: ${CORS_ALLOWED_ORIGINS}
       Ppip__Otel__Endpoint: http://otel-collector:4317
+      # Authority: DNS interno del contenedor Keycloak, usado para descubrir
+      # el JWKS (nunca sale del `app` network). Issuer: el hostname externo
+      # (KC_HOSTNAME) que Keycloak realmente estampa en el claim "iss" de
+      # cada token — deben coincidir para que la validación no falle
+      # (ver ADR-010, docs/12-security/01-security-controls.md).
+      Ppip__Auth__Authority: http://keycloak:8080/realms/ppip
+      Ppip__Auth__Issuer: http://auth.${PPIP_DOMAIN}/realms/ppip
+      Ppip__Auth__Audience: ppip-platform-api
     networks: [app, data]
     depends_on:
       mongodb: {condition: service_healthy}
@@ -211,11 +233,13 @@ services:
       rabbitmq: {condition: service_healthy}
       minio: {condition: service_healthy}
       qdrant: {condition: service_healthy}
+      keycloak: {condition: service_healthy}
     labels:
       traefik.enable: "true"
       traefik.http.routers.platform-api.rule: Host(`api.${PPIP_DOMAIN}`)
       traefik.http.routers.platform-api.entrypoints: web
       traefik.http.services.platform-api.loadbalancer.server.port: "8080"
+      traefik.http.routers.platform-api.middlewares: ppip-rate-limit@file,ppip-security-headers@file
     healthcheck:
       <<: *healthcheck-defaults
       test: ["CMD", "curl", "-f", "http://localhost:8080/health"]

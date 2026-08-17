@@ -7,14 +7,14 @@ Todo el sistema se ejecuta localmente mediante Docker Compose y simula conceptua
 
 ## Estado del proyecto
 
-**FASE 0 aprobada** · **FASE 1 (Docker infrastructure) implementada** · **FASE 2 (Observability foundation) implementada** (2026-08-16) — próxima: **FASE 3 — Identity & security**.
+**FASE 0 aprobada** · **FASE 1 (Docker infrastructure)** · **FASE 2 (Observability foundation)** · **FASE 3 (Identity & security) implementadas** (2026-08-16) — próxima: **FASE 4 — Procurement domain**.
 Especificación completa en [docs/](docs/); infraestructura y esqueletos ejecutables en `infrastructure/docker/` y `src/`. Ver [docs/ROADMAP.md](docs/ROADMAP.md) (incluye qué se validó en cada fase).
 
-## Arrancar FASE 1 + 2
+## Arrancar FASE 1 + 2 + 3
 
 ```bash
 cp infrastructure/docker/.env.example infrastructure/docker/.env   # editar credenciales locales
-make up          # perfiles core + app (build de imágenes incluido)
+make up          # perfiles core + app (build de imágenes incluido) — incluye Keycloak con realm `ppip`
 make smoke       # falla si algo no queda healthy
 make up-obs      # perfil obs: OTel Collector, Prometheus, Loki, Tempo, Grafana
 make smoke-obs   # ídem, para el perfil obs

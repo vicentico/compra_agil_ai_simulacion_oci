@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.*" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="10.*" />
+    <PackageReference Include="Testcontainers.Keycloak" Version="4.*" />
+    <PackageReference Include="xunit" Version="2.*" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.*" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\services\Ppip.PlatformApi\Ppip.PlatformApi.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- Mismo archivo que importa el Keycloak real de docker-compose.yml —
+         fuente única, el test container importa exactamente ese realm. -->
+    <None Include="..\..\infrastructure\docker\config\keycloak\ppip-realm.json"
+          Link="ppip-realm.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>

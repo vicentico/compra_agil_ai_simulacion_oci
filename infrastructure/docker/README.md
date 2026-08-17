@@ -1,4 +1,4 @@
-# infrastructure/docker — FASE 1: Docker infrastructure · FASE 2: Observability
+# infrastructure/docker — FASE 1: Docker infrastructure · FASE 2: Observability · FASE 3: Identity & security
 
 Implementa `docs/04-architecture/04-deployment-diagram.md`. Levanta la infraestructura base (perfil `core`), los esqueletos de aplicación (perfil `app`) y, opcionalmente, el stack de observabilidad (perfil `obs`) definidos en el Container Diagram.
 
@@ -21,11 +21,25 @@ Rutas vía Traefik (resolución automática de `*.localhost`, RFC 6761 — no re
 | URL | Servicio |
 |---|---|
 | http://ppip.localhost | Frontend Angular |
-| http://api.ppip.localhost | Platform API (`/health`, `/ready`, `/api/diagnostics/trace-check`) |
-| http://auth.ppip.localhost | Keycloak |
+| http://api.ppip.localhost | Platform API (`/health`, `/ready` públicos; `/api/diagnostics/whoami` rol `viewer`, `/api/diagnostics/trace-check` rol `analyst`) |
+| http://auth.ppip.localhost | Keycloak — realm `ppip` importado automáticamente |
 | http://grafana.ppip.localhost | Grafana (perfil `obs`) — dashboard `PPIP - Service Overview` provisionado |
 | http://localhost:8080 | Dashboard de Traefik (solo dev, inseguro — ver `docker-compose.override.yml`) |
 | http://localhost:9090, :3100, :3200 | Prometheus, Loki, Tempo (solo dev, expuestos por `docker-compose.override.yml`) |
+
+## Identidad (FASE 3, ADR-010)
+
+Keycloak importa `config/keycloak/ppip-realm.json` al arrancar (`--import-realm`, idempotente): realm `ppip`, 5 roles compuestos (`viewer < analyst < editor < admin < superadmin`), cliente público `ppip-spa` (PKCE, para el SPA en FASE 16) y cliente confidencial `ppip-test-client` (Direct Access Grants, **solo para tests automatizados**) con 5 usuarios de prueba (`{rol}.test` / `PpipTest123!`) — detalle y por qué esas credenciales están versionadas en `config/keycloak/README.md`.
+
+Para probar el RBAC manualmente:
+```bash
+TOKEN=$(curl -s -X POST http://auth.ppip.localhost/realms/ppip/protocol/openid-connect/token \
+  -d grant_type=password -d client_id=ppip-test-client \
+  -d client_secret=ppip-test-client-secret-not-for-production \
+  -d username=analyst.test -d password=PpipTest123! -d scope=openid | jq -r .access_token)
+curl -H "Authorization: Bearer $TOKEN" http://api.ppip.localhost/api/diagnostics/whoami
+```
+Suite automatizada equivalente (los mismos 5 usuarios, contra un Keycloak real vía Testcontainers, no un doble): `dotnet test tests/Ppip.PlatformApi.Tests`.
 
 ## Observabilidad (perfil `obs`, FASE 2)
 
@@ -35,9 +49,9 @@ Para verificar el trace end-to-end (criterio de éxito de FASE 2): `curl http://
 
 **otel-collector no tiene `HEALTHCHECK` de Docker** — su imagen (`otel/opentelemetry-collector-contrib`) es distroless (sin `sh`/`wget`/`curl`), no hay binario invocable para un `CMD`. Se verifica indirectamente: si Prometheus/Loki/Tempo reciben datos, el Collector está sano. `make smoke-obs` lo excluye explícitamente del chequeo de salud (no lo ignora en silencio).
 
-## Decisiones y límites explícitos de esta fase (transparencia de trade-offs)
+## Decisiones y límites explícitos (transparencia de trade-offs)
 
-1. **Sin stack de observabilidad todavía.** OTel Collector/Prometheus/Grafana/Loki son alcance de **FASE 2** (`docs/ROADMAP.md`); esta fase solo reserva la red `obs`. Mezclarlos ahora violaría la disciplina de fases del proyecto.
+1. **Alias de red obligatorio para Keycloak.** Con `KC_HOSTNAME_STRICT=false`, Keycloak embebe su `KC_HOSTNAME` (`auth.${PPIP_DOMAIN}`) en las URLs propias del discovery document (issuer, `jwks_uri`) sin importar por qué DNS se lo consultó — y como `*.localhost` resuelve siempre a loopback en varios clientes HTTP (RFC 6761), sin el alias `auth.${PPIP_DOMAIN}` en la red `app` (ver `docker-compose.yml`, servicio `keycloak`) otros contenedores no podrían resolver esas URLs. `Ppip.BuildingBlocks.Security` además fuerza la conexión física del backchannel JWKS al host:puerto de `Authority` como segunda defensa — detalle en `docs/ROADMAP.md` nota de cierre de FASE 3.
 2. **Keycloak en modo `start-dev`** (almacenamiento `dev-file`, sin Postgres) — válido para POC local; no usar así en producción/OCI. PostgreSQL se incorpora recién en FASE 15 (ADR-002); no se introduce antes solo para Keycloak.
 3. **Sin usuarios de aplicación con privilegio mínimo en MongoDB todavía** — se usan credenciales root vía `.env` porque aún no existen colecciones/repositorios reales (eso es FASE 4+). Se documenta como TODO explícito, no como omisión oculta.
 4. **`/ready` de los 4 servicios .NET verifica dependencias reales** (Mongo, Redis, RabbitMQ, MinIO, Qdrant, Ollama según corresponda a cada servicio) — no es un stub que siempre responde 200. Esto es intencional: el criterio de éxito de FASE 1 es demostrar que la topología de red y las credenciales están correctamente cableadas, no solo que el proceso arrancó.

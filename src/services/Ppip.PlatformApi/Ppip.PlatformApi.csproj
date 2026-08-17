@@ -6,5 +6,6 @@
   <ItemGroup>
     <ProjectReference Include="..\..\building-blocks\Ppip.BuildingBlocks.Health\Ppip.BuildingBlocks.Health.csproj" />
     <ProjectReference Include="..\..\building-blocks\Ppip.BuildingBlocks.Observability\Ppip.BuildingBlocks.Observability.csproj" />
+    <ProjectReference Include="..\..\building-blocks\Ppip.BuildingBlocks.Security\Ppip.BuildingBlocks.Security.csproj" />
   </ItemGroup>
 </Project>

@@ -2,21 +2,25 @@ using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Ppip.BuildingBlocks.Health;
 using Ppip.BuildingBlocks.Observability;
+using Ppip.BuildingBlocks.Security;
 
 // ============================================================================
 // Ppip.PlatformApi — esqueleto FASE 1 (Docker infrastructure) + observabilidad
-// FASE 2 (OTel, correlationId).
+// FASE 2 (OTel, correlationId) + identidad/seguridad FASE 3 (JWT+RBAC).
 //
 // Módulos de dominio (Procurement, Document, Knowledge/RAG, Proposal,
 // Compliance, Audit) se incorporan a partir de FASE 4 según docs/ROADMAP.md
 // y docs/03-domain/. Este Program.cs solo demuestra que la topología de red
 // y las credenciales de infraestructura están correctamente cableadas
-// (criterio de éxito de FASE 1) y que traces/métricas/logs/correlationId
-// fluyen end-to-end entre servicios (criterio de éxito de FASE 2).
+// (criterio de éxito de FASE 1), que traces/métricas/logs/correlationId
+// fluyen end-to-end entre servicios (criterio de éxito de FASE 2) y que el
+// RBAC de 5 roles funciona con tokens reales de Keycloak (criterio de éxito
+// de FASE 3, ver tests/Ppip.PlatformApi.Tests).
 // ============================================================================
 
 var builder = WebApplication.CreateBuilder(args);
 builder.AddPpipObservability("ppip-platform-api");
+builder.AddPpipKeycloakAuth();
 
 var config = builder.Configuration;
 var mongoConnectionString = config["Ppip:Mongo:ConnectionString"] ?? string.Empty;
@@ -63,6 +67,8 @@ var app = builder.Build();
 
 app.UseCorrelationId();
 app.UseCors("Default");
+app.UseAuthentication();
+app.UseAuthorization();
 
 var jsonWriter = new HealthCheckJsonWriter();
 
@@ -81,10 +87,20 @@ app.MapHealthChecks("/ready", new HealthCheckOptions
 app.MapGet("/", () => Results.Ok(new
 {
     service = "ppip-platform-api",
-    phase = "FASE 2 — Observability foundation",
+    phase = "FASE 3 — Identity & security",
     status = "skeleton",
     docs = "docs/04-architecture/00-architecture-overview.md",
 }));
+
+// Endpoint de diagnóstico de FASE 3 (no de negocio): expone las claims/roles
+// del token validado, para verificar manualmente el RBAC (criterio "viewer"
+// — el rol mínimo, cualquier usuario autenticado lo satisface).
+app.MapGet("/api/diagnostics/whoami", (HttpContext context) => Results.Ok(new
+{
+    subject = context.User.FindFirst("sub")?.Value,
+    preferredUsername = context.User.FindFirst("preferred_username")?.Value,
+    roles = context.User.FindAll(System.Security.Claims.ClaimTypes.Role).Select(c => c.Value),
+})).RequireAuthorization(PpipRoles.Viewer);
 
 // Endpoint de diagnóstico de FASE 2 (no de negocio): fuerza una llamada HTTP
 // real hacia los 3 workers para demostrar el trace end-to-end + propagación
@@ -92,6 +108,8 @@ app.MapGet("/", () => Results.Ok(new
 // (docs/ROADMAP.md). Las URLs quedan fijas a los nombres de servicio del
 // docker-compose porque este endpoint es temporal — se reemplaza por el
 // flujo real orientado a eventos a partir de FASE 4 (ver docs/03-domain/).
+// Protegido con rol "analyst" (FASE 3): equivalente a los endpoints de
+// estado/diagnóstico reales del catálogo (p.ej. GET /api/sync/status).
 app.MapGet("/api/diagnostics/trace-check", async (
     IHttpClientFactory httpClientFactory,
     HttpContext context,
@@ -131,9 +149,14 @@ app.MapGet("/api/diagnostics/trace-check", async (
         downstream,
         purpose = "FASE 2 — verifica trace+correlationId end-to-end (docs/13-observability/01-observability-spec.md)",
     });
-});
+}).RequireAuthorization(PpipRoles.Analyst);
 
 app.Run();
+
+// WebApplicationFactory<Program> (tests/Ppip.PlatformApi.Tests) necesita que
+// la clase Program generada implícitamente por top-level statements sea
+// pública.
+public partial class Program;
 
 /// <summary>Formatea el resultado de health checks como JSON estructurado (NFR-003).</summary>
 internal sealed class HealthCheckJsonWriter
