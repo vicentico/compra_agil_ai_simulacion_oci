@@ -104,4 +104,88 @@ public class CompraAgilTests
 
         Assert.Throws<InvalidOperationException>(compra.DeclararDesierta);
     }
+
+    [Fact]
+    public void AlinearEstado_SameEstado_IsNoOp()
+    {
+        var compra = DetectDefault();
+
+        compra.AlinearEstado(EstadoCompra.Publicada);
+
+        Assert.Equal(EstadoCompra.Publicada, compra.Estado);
+    }
+
+    [Fact]
+    public void AlinearEstado_ToCerrada_Transitions()
+    {
+        var compra = DetectDefault();
+
+        compra.AlinearEstado(EstadoCompra.Cerrada);
+
+        Assert.Equal(EstadoCompra.Cerrada, compra.Estado);
+    }
+
+    [Fact]
+    public void AlinearEstado_FromPublicadaToDesierta_AtraviesaCerradaImplicitamente()
+    {
+        // ChileCompra no siempre reporta "cerrada" antes de "desierta" — el
+        // primer sync que ve una compra puede encontrarla ya desierta.
+        var compra = DetectDefault();
+
+        compra.AlinearEstado(EstadoCompra.Desierta);
+
+        Assert.Equal(EstadoCompra.Desierta, compra.Estado);
+    }
+
+    [Fact]
+    public void AlinearEstado_FromPublicadaToAdjudicada_AtraviesaCerradaImplicitamente()
+    {
+        var compra = DetectDefault();
+
+        compra.AlinearEstado(EstadoCompra.Adjudicada);
+
+        Assert.Equal(EstadoCompra.Adjudicada, compra.Estado);
+    }
+
+    [Fact]
+    public void AlinearEstado_Regresion_Throws()
+    {
+        var compra = DetectDefault();
+        compra.Cerrar();
+
+        Assert.Throws<InvalidOperationException>(() => compra.AlinearEstado(EstadoCompra.Publicada));
+    }
+
+    [Fact]
+    public void AlinearEstado_DesiertaToAdjudicada_Throws()
+    {
+        var compra = DetectDefault();
+        compra.AlinearEstado(EstadoCompra.Desierta);
+
+        Assert.Throws<InvalidOperationException>(() => compra.AlinearEstado(EstadoCompra.Adjudicada));
+    }
+
+    [Fact]
+    public void Rehydrate_ReconstructsStateWithoutRaisingEvents()
+    {
+        var requirement = ProductRequirement.Create("Notebook", 5, "unidad");
+
+        var compra = CompraAgil.Rehydrate(
+            CompraAgilId.From("4321-5-LE24"),
+            Institucion,
+            "Compra de notebooks",
+            Money.From(1_000_000, "CLP"),
+            Vigencia,
+            EstadoCompra.Cerrada,
+            version: 3,
+            rawPayloadHash: "hash-v3",
+            ultimaActualizacion: DateTimeOffset.UtcNow,
+            requirements: [requirement]);
+
+        Assert.Equal(EstadoCompra.Cerrada, compra.Estado);
+        Assert.Equal(3, compra.Version);
+        Assert.Equal("hash-v3", compra.RawPayloadHash);
+        Assert.Single(compra.Requirements);
+        Assert.Empty(compra.DomainEvents);
+    }
 }

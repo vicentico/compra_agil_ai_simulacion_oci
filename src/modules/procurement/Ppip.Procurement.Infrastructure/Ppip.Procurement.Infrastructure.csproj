@@ -7,8 +7,17 @@
          blocks/módulos): se fija exacta vía Central Package Management
          cuando exista un pipeline de build real (FASE 4+ ya lo anunció). -->
     <PackageReference Include="Microsoft.Extensions.Http.Resilience" Version="10.*" />
+    <PackageReference Include="MongoDB.Driver" Version="3.*" />
+    <PackageReference Include="RabbitMQ.Client" Version="7.*" />
+    <PackageReference Include="StackExchange.Redis" Version="2.*" />
   </ItemGroup>
-  <!-- No referencia a Ppip.Procurement.Domain a propósito: FASE 5 es solo el
-       cliente HTTP (puerto + adaptador resiliente); el mapeo a agregados de
-       dominio (anti-corruption layer, SyncOrchestrator) es FASE 6. -->
+  <ItemGroup>
+    <!-- FASE 6: los adaptadores de persistencia (Mongo) e IChileCompraClient
+         comparten este proyecto; implementan los puertos de
+         Ppip.Procurement.Domain/Ports (ICompraAgilRepository, ISyncLock,
+         etc.) — a diferencia de FASE 5, ahora SÍ hace falta conocer los
+         agregados de dominio para poder reconstruirlos desde MongoDB. -->
+    <ProjectReference Include="..\Ppip.Procurement.Domain\Ppip.Procurement.Domain.csproj" />
+    <ProjectReference Include="..\..\..\building-blocks\Ppip.BuildingBlocks.Messaging\Ppip.BuildingBlocks.Messaging.csproj" />
+  </ItemGroup>
 </Project>

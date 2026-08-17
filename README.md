@@ -7,8 +7,8 @@ Todo el sistema se ejecuta localmente mediante Docker Compose y simula conceptua
 
 ## Estado del proyecto
 
-**FASE 0 aprobada** · **FASE 1-5 implementadas** (Docker infra, Observability, Identity & security, Procurement domain, ChileCompra integration) (2026-08-16) — próxima: **FASE 6 — Incremental synchronization**.
-Especificación completa en [docs/](docs/); infraestructura y esqueletos ejecutables en `infrastructure/docker/` y `src/`. Dominio de Procurement (sin infraestructura, 42 tests): `src/modules/procurement/Ppip.Procurement.Domain`. Cliente resiliente de la API real de ChileCompra (spike ejecutado, 22 contract tests): `src/modules/procurement/Ppip.Procurement.Infrastructure`. Ver [docs/ROADMAP.md](docs/ROADMAP.md) (incluye qué se validó en cada fase).
+**FASE 0 aprobada** · **FASE 1-6 implementadas** (Docker infra, Observability, Identity & security, Procurement domain, ChileCompra integration, Incremental synchronization) (2026-08-17) — próxima: **FASE 7 — Document storage**.
+Especificación completa en [docs/](docs/); infraestructura y esqueletos ejecutables en `infrastructure/docker/` y `src/`. UC-001 (sincronización incremental) completo e idempotente, validado con Testcontainers (Mongo/Redis reales): `Ppip.Procurement.Domain` (49 tests) + `Ppip.Procurement.Application` (`SyncOrchestrator`, 19 tests) + `Ppip.Procurement.Infrastructure` (cliente ChileCompra + persistencia Mongo + lock Redis + outbox dispatcher RabbitMQ, 29 tests) + `Ppip.SyncWorker`. Ver [docs/ROADMAP.md](docs/ROADMAP.md) (incluye qué se validó en cada fase).
 
 ## Arrancar FASE 1 + 2 + 3
 

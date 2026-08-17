@@ -7,7 +7,7 @@
 | Rol que se traspasa | Tech Lead / Arquitecto del proyecto (agente IA con supervisión del usuario) |
 | Ubicación del repositorio | `C:\ClaudeCowork\Agente_Compras_Agiles` (raíz del repo = carpeta del proyecto) |
 | Sesión de origen | Claude Cowork, modelo configurado `claude-fable-5` |
-| Estado global | **FASE 0 aprobada · FASE 1-5 (Docker infra, Observability, Identity & security, Procurement domain, ChileCompra integration) implementadas** (2026-08-16). Próxima: FASE 6 — Incremental synchronization. |
+| Estado global | **FASE 0 aprobada · FASE 1-6 (Docker infra, Observability, Identity & security, Procurement domain, ChileCompra integration, Incremental synchronization) implementadas** (2026-08-17). Próxima: FASE 7 — Document storage. |
 | Documentos rectores | `Master Prompt — OCI Local Simulator...md` (QUÉ construir) + MASTER PROMPT 2 (CÓMO construirlo — entregado por chat, ver §3.6 de este documento) |
 
 > **Instrucción para el asistente entrante:** lee este documento completo, luego `README.md`, `docs/ROADMAP.md` y `docs/architecture-review-package.md`. Con eso puedes asumir el rol sin preguntas repetitivas. Ante cualquier duda de detalle, la respuesta está en `docs/` — este proyecto se rige por el principio "el sistema debe comprenderse desde docs/ sin leer el código".
@@ -132,18 +132,21 @@ C:\ClaudeCowork\Agente_Compras_Agiles\
 │   ├── building-blocks/Ppip.BuildingBlocks.Security/        ← FASE 3 (JWT + RBAC contra Keycloak)
 │   ├── building-blocks/Ppip.BuildingBlocks.Domain/          ← FASE 4 (kernel DDD: Entity/AggregateRoot/ValueObject)
 │   ├── building-blocks/Ppip.BuildingBlocks.Messaging/       ← FASE 4 (EventEnvelope, Outbox/Idempotency — puertos)
-│   ├── modules/procurement/Ppip.Procurement.Domain/         ← FASE 4 (CompraAgil, SyncPolicy... sin infra, NFR-013)
-│   ├── modules/procurement/Ppip.Procurement.Infrastructure/ ← FASE 5 (ChileCompra: IChileCompraClient resiliente)
-│   ├── services/Ppip.PlatformApi/, workers/Ppip.{Sync,Document,Ai}Worker/  ← FASE 1, instrumentados en FASE 2+3
+│   ├── modules/procurement/Ppip.Procurement.Domain/         ← FASE 4 (CompraAgil, SyncPolicy...) + FASE 6 (Ports/, AlinearEstado, Rehydrate) — sin infra, NFR-013
+│   ├── modules/procurement/Ppip.Procurement.Infrastructure/ ← FASE 5 (ChileCompra) + FASE 6 (Persistence/ Mongo, Locking/ Redis, Messaging/ OutboxDispatcher RabbitMQ)
+│   ├── modules/procurement/Ppip.Procurement.Application/    ← FASE 6 (SyncOrchestrator, CompraAgilNormalizer, ProcurementEventPublisher — capa de aplicación real, primer módulo con las 3 capas)
+│   ├── services/Ppip.PlatformApi/, workers/Ppip.DocumentWorker/, workers/Ppip.AiWorker/  ← FASE 1, instrumentados en FASE 2+3, sin cambios en FASE 6
+│   ├── workers/Ppip.SyncWorker/       ← FASE 1 (esqueleto) → FASE 6 (SyncSchedulerWorker real, ya no es el heartbeat placeholder)
 │   └── apps/frontend/                ← FASE 1 (Angular 20.3)
 ├── docs/07-events/schemas/           ← FASE 4: JSON Schema de CompraAgilDetected/Updated.v1
 ├── tests/Ppip.BuildingBlocks.Observability.Tests/  ← FASE 2, xUnit (4 tests, CorrelationIdMiddleware)
 ├── tests/Ppip.PlatformApi.Tests/                   ← FASE 3, xUnit (12 tests, RBAC vs Keycloak real/Testcontainers)
 ├── tests/Ppip.BuildingBlocks.Domain.Tests/, Ppip.BuildingBlocks.Messaging.Tests/  ← FASE 4 (9+9 tests)
-├── tests/Ppip.Procurement.Domain.Tests/            ← FASE 4, xUnit (42 tests)
-├── tests/Ppip.ArchitectureTests/                   ← FASE 4, NetArchTest.Rules (NFR-013, 4 tests)
-├── tests/Ppip.Events.Contracts.Tests/              ← FASE 4, JsonSchema.Net (4 tests)
-├── tests/Ppip.Procurement.Infrastructure.Tests/    ← FASE 5, WireMock.Net contra fixtures reales (22 tests)
+├── tests/Ppip.Procurement.Domain.Tests/            ← FASE 4 (42) + FASE 6 (+7: AlinearEstado/Rehydrate) = 49 tests
+├── tests/Ppip.ArchitectureTests/                   ← FASE 4, NetArchTest.Rules (NFR-013, 4 tests) — reconfirmado en FASE 6 con los nuevos Ports
+├── tests/Ppip.Events.Contracts.Tests/              ← FASE 4 (4) + FASE 6 (+2: ProducerSerializationTests, serialización real) = 6 tests
+├── tests/Ppip.Procurement.Infrastructure.Tests/    ← FASE 5 (22, WireMock) + FASE 6 (+7: Mongo/Redis reales vía Testcontainers) = 29 tests
+├── tests/Ppip.Procurement.Application.Tests/       ← FASE 6, nuevo proyecto — SyncOrchestrator con dobles en memoria, incluye la prueba de idempotencia NFR-001 (19 tests)
 └── _to_delete/                   ← tar.gz de entregas pasadas; el usuario puede borrarlo
 ```
 
@@ -170,18 +173,28 @@ C:\ClaudeCowork\Agente_Compras_Agiles\
 
 **OQ-01 y OQ-10 cerradas; OQ-09 y OQ-06/ASM-08 parcialmente informadas; OQ-02 sigue abierta** (existen documentos adjuntos reales, pero no se probó descarga — eso es FASE 7). Detalle en `docs/01-discovery/09-open-questions.md` y `07-assumptions.md`.
 
+9. **FASE 6 — Incremental synchronization: IMPLEMENTADA (2026-08-17). UC-001 completo e idempotente**, validado tanto con dobles en memoria como contra MongoDB/Redis **reales** (Testcontainers — Docker sí estaba disponible en este entorno). Nuevo módulo `Ppip.Procurement.Application` (`SyncOrchestrator`, `CompraAgilNormalizer`, `NormalizedFieldsHasher`, `ProcurementEventPublisher`); puertos del dominio movidos a `Ppip.Procurement.Domain/Ports` (no a Application, para evitar una referencia circular Application↔Infrastructure — Application ya depende de Infrastructure desde FASE 5 para `IChileCompraClient`); `Ppip.Procurement.Infrastructure` gana `Persistence/` (Mongo, incluye `MongoOutboxStore` — primer adaptador real del puerto de FASE 4), `Locking/RedisSyncLock` (SETNX + release con Lua compare-and-delete) y `Messaging/OutboxDispatcher` (RabbitMQ real); `Ppip.SyncWorker` ya no es el heartbeat de FASE 1 — `SyncSchedulerWorker` corre el ciclo cada 15 min y expone `POST /internal/sync/trigger` para disparo manual.
+
+**Dos bugs reales encontrados construyendo esto (ninguno visible sin el código real corriendo):** (1) el `ResponseHash` de FASE 4 (hash del JSON crudo completo) cambia en casi cada poll por campos que no importan (`fecha_ultimo_cambio`, `total_ofertas_recibidas`) — usarlo para `SyncPolicy` habría generado actualizaciones espurias con `changedFields` vacío, violando el propio schema. Se agregó `NormalizedFieldsHasher`, que hashea solo título/monto/vigencia/estado. (2) `EventEnvelope<T>` (FASE 4) serializaba PascalCase por defecto — los schemas de `docs/07-events/` exigen camelCase con `additionalProperties:false`, así que el primer productor real habría emitido JSON que no cumple su propio contrato. Ningún test de FASE 4 lo detectó porque validaban JSON escrito a mano, nunca la serialización real. Se corrigió con `[JsonPropertyName]` y se agregó `ProducerSerializationTests` (serializa con el código real del productor) para que no vuelva a pasar desapercibido.
+
+**Mapeo `estado.codigo`→`EstadoCompra`:** publicada/cerrada/desierta directo, `proveedor_seleccionado`→Adjudicada; `cancelada` (documentado, no visto en el spike de FASE 5) **no tiene mapeo todavía** — el dominio no lo modela, esas compras quedan en cuarentena (raw guardado, sin escritura normalizada) en vez de adivinar (nueva OQ-11). `CompraAgil.AlinearEstado` atraviesa estados intermedios cuando ChileCompra no los reporta explícitos.
+
+**Simplificación deliberada:** normaliza solo desde el DTO de listado (no llama a detalle por ítem, evita duplicar cuota) — `Requirements` queda vacío en todo lo que el sync crea/actualiza, y `CompraAgilDetected.documentRefs` se publica siempre `[]` (OQ-02 sigue abierta, no hay URL de descarga honesta que poner todavía).
+
+**103 tests nuevos/actualizados, todos en verde:** Domain 49 (+7), Application 19 (proyecto nuevo, incluye la prueba directa de NFR-001), Infrastructure 29 (22 FASE 5 + 7 contra Mongo/Redis reales), Events.Contracts 6 (+2 de serialización real). **Fuera de esta fase, explícito:** `POST /api/sync/compra-agil` autenticado en Platform API (el módulo Procurement no está wireado ahí todavía — el trigger real es el endpoint interno sin auth del propio worker); `IIdempotencyStore` (sin consumidor real hasta FASE 7); test Testcontainers del `OutboxDispatcher` contra RabbitMQ real (validado por compilación + mismo patrón que el health check ya probado, pero sin test automatizado punta a punta); FR-063/064 (dependen de `ScoringPolicy`, FASE 12, ya eran condicionales en el ROADMAP). Detalle completo en `docs/ROADMAP.md` nota de cierre de FASE 6.
+
 Prompts y dominio de los otros 6 bounded contexts **todavía no existen** — se construyen en sus fases (Document Intelligence F7+, Knowledge/RAG F9+, Proposal F12+, Compliance F14, Audit F15).
 
 ### 5.2 Decisiones del usuario ya tomadas (no volver a preguntar)
 Idioma docs: español · repo en la raíz de la carpeta · cambios 1 y 2 como SHOULD · gate FASE 0→1 aprobado · recomendador heurístico ahora, ML después · outcomes manuales + API si el spike la confirma · notificaciones in-app + email digest (MailHog local) · el usuario ya entregó su ticket personal de ChileCompra (protegido en `.env`, ver §5.5).
 
 ### 5.3 La tarea inmediata
-**FASE 6 — Incremental synchronization:** `SyncOrchestrator` (anti-corruption layer que mapea los DTOs crudos de `Ppip.Procurement.Infrastructure.ChileCompra` a los agregados de `Ppip.Procurement.Domain`, usando `SyncPolicy`/`ChileCompraDateParser` ya construidos) + `CheckpointStore` real (Mongo) + primer productor de eventos real (`CompraAgilDetected`/`Updated` vía outbox, cerrando por fin `Ppip.BuildingBlocks.Messaging`). Entregable: UC-001 completo e idempotente.
+**FASE 7 — Document storage:** descarga validada (SSRF allowlist, FR-010), almacenamiento en MinIO con hash SHA-256 (FR-011), versionado por hash (`document_versions`, unique `{documentId, sha256}`). Requiere primero resolver **OQ-02** (¿la API expone algún endpoint de descarga de adjuntos? no se probó en FASE 5/6 — los items solo traen `documentos[].id`+`nombre`) con un pequeño spike dirigido (puede necesitar más cuota del ticket del usuario — pedir confirmación antes de gastarla, mismo criterio que FASE 5). Entregable del ROADMAP: "UC-003 etapas 1-3".
 
-Nota operativa para retomar el stack: `make up && make up-obs && make smoke && make smoke-obs`. Traefik puede fallar a bindear el puerto 80 si el host ya lo tiene ocupado (pasó en las sesiones de FASE 2 y 3, por otro proceso ajeno al proyecto) — no es un bug del compose; en ese caso los servicios de app siguen accesibles vía `docker exec <container> curl http://localhost:8080/...` o publicando temporalmente otro puerto. Para probar auth manualmente sin Traefik, agregar los headers `X-Forwarded-Host/Proto/Port` que Traefik normalmente añade (ver `infrastructure/docker/README.md`). Para el dominio/infra de Procurement no hace falta levantar nada — `dotnet test tests/Ppip.Procurement.Domain.Tests`, `tests/Ppip.Procurement.Infrastructure.Tests` y `tests/Ppip.ArchitectureTests` corren sin Docker.
+Nota operativa para retomar el stack: `make up && make up-obs && make smoke && make smoke-obs`. Traefik puede fallar a bindear el puerto 80 si el host ya lo tiene ocupado (pasó en varias sesiones, por otro proceso ajeno al proyecto) — no es un bug del compose; en ese caso los servicios de app siguen accesibles vía `docker exec <container> curl http://localhost:8080/...` o publicando temporalmente otro puerto. Para probar auth manualmente sin Traefik, agregar los headers `X-Forwarded-Host/Proto/Port` que Traefik normalmente añade (ver `infrastructure/docker/README.md`). Para dominio/aplicación/infra de Procurement no hace falta levantar nada — `dotnet test` en `tests/Ppip.Procurement.Domain.Tests`, `Ppip.Procurement.Application.Tests` y `Ppip.ArchitectureTests` corre sin Docker; `Ppip.Procurement.Infrastructure.Tests` sí necesita Docker (Testcontainers para Mongo/Redis, WireMock no). **Docker Desktop y el SDK de .NET 10 estaban disponibles y funcionando en la sesión de FASE 6** (confirmado: `docker version` y `dotnet --version` responden, Testcontainers descargó y corrió contenedores reales sin problema).
 
 ### 5.4 Riesgos y cuestiones abiertas a vigilar
-RSK-02 (alucinaciones — mitigación en cada capa), RSK-05 (sobreingeniería — resistir), RSK-12 (alcance MUST grande — gates), RSK-14 (cold start del score), OQ-02 (descarga de adjuntos, FASE 7), OQ-03 (modelo de embeddings, decide dimensión de Qdrant en F9), OQ-06/ASM-08 (revisión legal formal de términos de uso, sigue pendiente), OQ-09 (taxonomía de rubros para matching — `codigo_producto` parece UNSPSC, sin confirmar, F12).
+RSK-02 (alucinaciones — mitigación en cada capa), RSK-05 (sobreingeniería — resistir), RSK-12 (alcance MUST grande — gates), RSK-14 (cold start del score), OQ-02 (descarga de adjuntos — bloquea FASE 7, ver §5.3), OQ-03 (modelo de embeddings, decide dimensión de Qdrant en F9), OQ-06/ASM-08 (revisión legal formal de términos de uso, sigue pendiente), OQ-09 (taxonomía de rubros para matching — `codigo_producto` parece UNSPSC, sin confirmar, F12), OQ-11 (nueva, FASE 6: `EstadoCompra` no modela `cancelada` — compras así quedan en cuarentena hasta que aparezca un caso real).
 
 ### 5.5 Notas operativas del entorno (Cowork)
 - La carpeta del usuario está montada vía device bridge; **en la carpeta montada no se puede sobrescribir con tar ni borrar con rm** (unlink prohibido): extraer a `/tmp` y copiar con `cp -f`; para "borrar", mover a `_to_delete/`.
@@ -193,4 +206,4 @@ RSK-02 (alucinaciones — mitigación en cada capa), RSK-05 (sobreingeniería �
 El registro npm ya publica Angular 22 estable (2026-08). Se implementó el frontend en **Angular 20.3.x** por ser la versión ya documentada en el stack (ARCHITECTURE.md) — no se saltó de versión sin ADR. Si el equipo quiere adoptar 22, requiere una decisión explícita, no un cambio silencioso de un scaffold.
 
 ---
-*Fin del handover. El asistente entrante debe confirmar lectura de README + ROADMAP + `infrastructure/docker/README.md` y proceder con la tarea inmediata (§5.3, FASE 5) siguiendo el formato de respuesta §49.*
+*Fin del handover. El asistente entrante debe confirmar lectura de README + ROADMAP + `infrastructure/docker/README.md` y proceder con la tarea inmediata (§5.3, FASE 7) siguiendo el formato de respuesta §49.*

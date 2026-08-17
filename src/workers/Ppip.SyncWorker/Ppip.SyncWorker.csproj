@@ -5,5 +5,11 @@
   <ItemGroup>
     <ProjectReference Include="..\..\building-blocks\Ppip.BuildingBlocks.Health\Ppip.BuildingBlocks.Health.csproj" />
     <ProjectReference Include="..\..\building-blocks\Ppip.BuildingBlocks.Observability\Ppip.BuildingBlocks.Observability.csproj" />
+    <!-- FASE 6: composition root de UC-001 — Application trae Domain +
+         Infrastructure transitivamente, pero Infrastructure se referencia
+         también de forma directa porque sus namespaces (ChileCompra,
+         Persistence, Locking, Messaging) se usan explícitamente en Program.cs. -->
+    <ProjectReference Include="..\..\modules\procurement\Ppip.Procurement.Application\Ppip.Procurement.Application.csproj" />
+    <ProjectReference Include="..\..\modules\procurement\Ppip.Procurement.Infrastructure\Ppip.Procurement.Infrastructure.csproj" />
   </ItemGroup>
 </Project>

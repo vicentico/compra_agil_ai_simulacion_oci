@@ -2,6 +2,11 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.*" />
     <PackageReference Include="WireMock.Net" Version="2.*" />
+    <!-- FASE 6: valida los adaptadores Mongo/Redis contra infraestructura
+         real (docs/15-testing/01: "Integration... Testcontainers"), no solo
+         los dobles en memoria de Ppip.Procurement.Application.Tests. -->
+    <PackageReference Include="Testcontainers.MongoDb" Version="4.*" />
+    <PackageReference Include="Testcontainers.Redis" Version="4.*" />
     <PackageReference Include="xunit" Version="2.*" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.*" />
   </ItemGroup>

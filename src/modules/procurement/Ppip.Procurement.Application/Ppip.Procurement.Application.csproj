@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>Ppip.Procurement.Application</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- Explícitas (no solo transitivas vía Infrastructure→Http.Resilience) para que el grafo de dependencias no dependa de un detalle interno de otro proyecto. -->
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.*" />
+    <PackageReference Include="Microsoft.Extensions.Options" Version="10.*" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\building-blocks\Ppip.BuildingBlocks.Messaging\Ppip.BuildingBlocks.Messaging.csproj" />
+    <ProjectReference Include="..\Ppip.Procurement.Domain\Ppip.Procurement.Domain.csproj" />
+    <!-- Referencia a Infrastructure (no al revés) a propósito: IChileCompraClient
+         y sus DTOs viven ahí desde FASE 5 (el cliente devuelve DTOs crudos
+         para que la traducción a agregados sea responsabilidad de esta capa).
+         Los puertos que Infrastructure implementa (ICompraAgilRepository,
+         ISyncLock, etc.) viven en Ppip.Procurement.Domain/Ports — así se evita
+         una referencia circular Application↔Infrastructure. -->
+    <ProjectReference Include="..\Ppip.Procurement.Infrastructure\Ppip.Procurement.Infrastructure.csproj" />
+  </ItemGroup>
+</Project>

@@ -43,6 +43,45 @@ public sealed class CompraAgil : AggregateRoot<CompraAgilId>
         _requirements = [.. requirements];
     }
 
+    /// <summary>Reconstruye el agregado tal como quedó persistido — no levanta eventos (no es un hecho de negocio, es una lectura).</summary>
+    private CompraAgil(
+        CompraAgilId id,
+        InstitutionRef institution,
+        string titulo,
+        Money montoEstimado,
+        DateRange vigencia,
+        EstadoCompra estado,
+        int version,
+        string rawPayloadHash,
+        DateTimeOffset ultimaActualizacion,
+        IEnumerable<ProductRequirement> requirements)
+        : base(id)
+    {
+        Institution = institution;
+        Titulo = titulo;
+        MontoEstimado = montoEstimado;
+        Vigencia = vigencia;
+        Estado = estado;
+        Version = version;
+        RawPayloadHash = rawPayloadHash;
+        UltimaActualizacion = ultimaActualizacion;
+        _requirements = [.. requirements];
+    }
+
+    /// <summary>Usado por los repositorios (FASE 6) para reconstruir el agregado desde almacenamiento.</summary>
+    public static CompraAgil Rehydrate(
+        CompraAgilId id,
+        InstitutionRef institution,
+        string titulo,
+        Money montoEstimado,
+        DateRange vigencia,
+        EstadoCompra estado,
+        int version,
+        string rawPayloadHash,
+        DateTimeOffset ultimaActualizacion,
+        IEnumerable<ProductRequirement> requirements) =>
+        new(id, institution, titulo, montoEstimado, vigencia, estado, version, rawPayloadHash, ultimaActualizacion, requirements);
+
     /// <summary>Primera vez que se ve esta Compra Ágil (UC-001 paso 6) — levanta <see cref="CompraAgilDetected"/>.</summary>
     public static CompraAgil Detect(
         CompraAgilId id,
@@ -136,6 +175,41 @@ public sealed class CompraAgil : AggregateRoot<CompraAgilId>
     public void Adjudicar() => TransitionTo(EstadoCompra.Adjudicada);
 
     public void DeclararDesierta() => TransitionTo(EstadoCompra.Desierta);
+
+    /// <summary>
+    /// Alinea el estado local con el que reporta ChileCompra (UC-001 paso 7),
+    /// atravesando estados intermedios si hace falta: la API no siempre
+    /// reporta el estado intermedio explícitamente (p.ej. una compra puede
+    /// aparecer "desierta" en el primer sync que la ve tras estar cerrada
+    /// varios días). No-op si ya coincide; lanza si el destino implica
+    /// retroceder (una compra cerrada nunca vuelve a publicada).
+    /// </summary>
+    public void AlinearEstado(EstadoCompra objetivo)
+    {
+        if (Estado == objetivo)
+        {
+            return;
+        }
+
+        if (objetivo == EstadoCompra.Cerrada)
+        {
+            Cerrar();
+            return;
+        }
+
+        if (objetivo is EstadoCompra.Adjudicada or EstadoCompra.Desierta)
+        {
+            if (Estado == EstadoCompra.Publicada)
+            {
+                Cerrar();
+            }
+
+            TransitionTo(objetivo);
+            return;
+        }
+
+        throw new InvalidOperationException($"Transición de estado inválida: {Estado} → {objetivo}.");
+    }
 
     private void TransitionTo(EstadoCompra nuevo)
     {

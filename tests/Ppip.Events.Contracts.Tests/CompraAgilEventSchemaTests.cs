@@ -12,17 +12,8 @@ namespace Ppip.Events.Contracts.Tests;
 /// </summary>
 public class CompraAgilEventSchemaTests
 {
-    private static readonly string SchemasDir = Path.Combine(AppContext.BaseDirectory, "schemas");
-
-    // JsonSchema.FromFile registra el $id en el registro global al construir
-    // — cargar el mismo archivo más de una vez lanza "Overwriting registered
-    // schemas is not permitted". Se cargan una sola vez y se reusan.
-    private static readonly JsonSchema EnvelopeSchema = LoadSchema("envelope.schema.json");
-    private static readonly JsonSchema CompraAgilDetectedSchema = LoadSchema("CompraAgilDetected.v1.schema.json");
-    private static readonly JsonSchema CompraAgilUpdatedSchema = LoadSchema("CompraAgilUpdated.v1.schema.json");
-
-    private static JsonSchema LoadSchema(string fileName) =>
-        JsonSchema.FromFile(Path.Combine(SchemasDir, fileName));
+    private static readonly JsonSchema CompraAgilDetectedSchema = Schemas.CompraAgilDetectedV1;
+    private static readonly JsonSchema CompraAgilUpdatedSchema = Schemas.CompraAgilUpdatedV1;
 
     [Fact]
     public void CompraAgilDetectedV1_NormativeExample_IsValid()

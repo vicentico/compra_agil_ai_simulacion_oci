@@ -257,11 +257,14 @@ services:
       Ppip__RabbitMq__Host: rabbitmq
       Ppip__RabbitMq__Username: ${RABBITMQ_USER}
       Ppip__RabbitMq__Password: ${RABBITMQ_PASSWORD}
+      Ppip__Redis__ConnectionString: redis:6379
+      Ppip__ChileCompra__Ticket: ${CHILECOMPRA_TICKET}
       Ppip__Otel__Endpoint: http://otel-collector:4317
     networks: [app, data]
     depends_on:
       mongodb: {condition: service_healthy}
       rabbitmq: {condition: service_healthy}
+      redis: {condition: service_healthy}
     healthcheck:
       <<: *healthcheck-defaults
       test: ["CMD", "curl", "-f", "http://localhost:8080/health"]

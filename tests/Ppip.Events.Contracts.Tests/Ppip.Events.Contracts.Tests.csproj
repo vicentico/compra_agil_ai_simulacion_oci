@@ -10,4 +10,10 @@
          contrato validado es el que consumidores/productores realmente ven. -->
     <None Include="..\..\docs\07-events\schemas\*.json" Link="schemas\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
+  <ItemGroup>
+    <!-- FASE 6: valida la serialización REAL del primer productor
+         (Ppip.Procurement.Application), no solo el JSON de ejemplo escrito a
+         mano — ver ProducerSerializationTests.cs. -->
+    <ProjectReference Include="..\..\src\modules\procurement\Ppip.Procurement.Application\Ppip.Procurement.Application.csproj" />
+  </ItemGroup>
 </Project>

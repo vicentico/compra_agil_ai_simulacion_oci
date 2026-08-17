@@ -1,4 +1,5 @@
 using System.Text;
+using System.Text.Json.Serialization;
 
 namespace Ppip.BuildingBlocks.Messaging;
 
@@ -7,17 +8,21 @@ namespace Ppip.BuildingBlocks.Messaging;
 /// (docs/07-events/00-event-conventions.md). <typeparamref name="TPayload"/>
 /// es el contrato específico del evento (p.ej. el payload de
 /// CompraAgilDetected.v1) — mínimo, solo ids + hechos del cambio (regla 6).
+/// Los <c>JsonPropertyName</c> son obligatorios: <c>docs/07-events/schemas/</c>
+/// exige camelCase, pero System.Text.Json serializa PascalCase por defecto —
+/// sin esto, cualquier productor real generaría JSON que no cumple su propio
+/// schema (nunca ejercido hasta el primer productor real, FASE 6).
 /// </summary>
 public sealed record EventEnvelope<TPayload>(
-    Guid EventId,
-    string EventType,
-    int Version,
-    DateTimeOffset Timestamp,
-    string CorrelationId,
-    string? CausationId,
-    string Producer,
-    bool IsDemoData,
-    TPayload Payload)
+    [property: JsonPropertyName("eventId")] Guid EventId,
+    [property: JsonPropertyName("eventType")] string EventType,
+    [property: JsonPropertyName("version")] int Version,
+    [property: JsonPropertyName("timestamp")] DateTimeOffset Timestamp,
+    [property: JsonPropertyName("correlationId")] string CorrelationId,
+    [property: JsonPropertyName("causationId")] string? CausationId,
+    [property: JsonPropertyName("producer")] string Producer,
+    [property: JsonPropertyName("isDemoData")] bool IsDemoData,
+    [property: JsonPropertyName("payload")] TPayload Payload)
 {
     /// <summary>
     /// Construye un envelope nuevo: <c>EventId</c> como UUID v7 (ordenable
