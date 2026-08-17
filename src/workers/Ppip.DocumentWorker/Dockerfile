@@ -3,6 +3,7 @@ FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 COPY src/Directory.Build.props src/global.json ./
 COPY src/building-blocks/ building-blocks/
+COPY src/modules/ modules/
 COPY src/workers/Ppip.DocumentWorker/ workers/Ppip.DocumentWorker/
 WORKDIR /src/workers/Ppip.DocumentWorker
 RUN dotnet restore

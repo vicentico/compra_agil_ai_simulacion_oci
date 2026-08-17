@@ -2,11 +2,17 @@ using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Ppip.BuildingBlocks.Health;
 using Ppip.BuildingBlocks.Observability;
+using Ppip.DocumentIntelligence.Application;
+using Ppip.DocumentIntelligence.Domain.Ports;
+using Ppip.DocumentIntelligence.Infrastructure;
+using Ppip.DocumentIntelligence.Infrastructure.Http;
+using Ppip.DocumentIntelligence.Infrastructure.Persistence;
+using Ppip.DocumentIntelligence.Infrastructure.Storage;
 using Ppip.DocumentWorker;
 
 // ============================================================================
-// Ppip.DocumentWorker — esqueleto FASE 1. Pipeline real en FASE 7-9.
-// Observabilidad (OTel, correlationId) cableada en FASE 2.
+// Ppip.DocumentWorker — UC-003 pasos 1-3 (FASE 7): descarga validada (SSRF),
+// MinIO, versionado por hash. Clasificación/extracción/OCR/chunking: FASE 8-9.
 // ============================================================================
 
 var builder = WebApplication.CreateBuilder(args);
@@ -19,7 +25,16 @@ var rabbitPassword = config["Ppip:RabbitMq:Password"] ?? string.Empty;
 var minioEndpoint = config["Ppip:MinIo:Endpoint"] ?? string.Empty;
 var qdrantEndpoint = config["Ppip:Qdrant:Endpoint"] ?? string.Empty;
 
-builder.Services.AddHttpClient();
+builder.AddDocumentDownloader();
+builder.AddDocumentStorage();
+builder.AddDocumentPersistence();
+
+builder.Services.AddOptions<DocumentDownloadOptions>()
+    .Bind(config.GetSection(DocumentDownloadOptions.SectionName));
+builder.Services.AddSingleton<IMalwareScanner, NoOpMalwareScanner>();
+builder.Services.AddSingleton<DocumentEventPublisher>();
+builder.Services.AddSingleton<DocumentDownloadOrchestrator>();
+
 builder.Services.AddHostedService<HeartbeatWorker>();
 
 builder.Services.AddHealthChecks()
@@ -46,7 +61,26 @@ app.MapHealthChecks("/ready", new HealthCheckOptions
     ResponseWriter = jsonWriter.WriteAsync,
 });
 
+// Disparo manual/demo (sin trigger automático real todavía: OQ-02 sigue
+// abierta — no hay una fuente confirmada de sourceUrl reales de ChileCompra,
+// ver docs/ROADMAP.md nota de cierre de FASE 7). Mismo criterio que
+// Ppip.SyncWorker: endpoint interno, sin auth, no ruteado por Traefik.
+app.MapPost("/internal/documents/download", async (DownloadRequest request, DocumentDownloadOrchestrator orchestrator, CancellationToken cancellationToken) =>
+{
+    var correlationId = $"doc-manual-{Guid.CreateVersion7()}";
+    var document = await orchestrator.ProcessAsync(request.CompraAgilId, request.SourceUrl, request.DeclaredName, correlationId, cancellationToken);
+    return Results.Accepted(value: new
+    {
+        correlationId,
+        documentId = document.Id.ToString(),
+        document.Stage,
+        document.FailureReason,
+    });
+});
+
 app.Run();
+
+internal sealed record DownloadRequest(string CompraAgilId, string SourceUrl, string DeclaredName);
 
 internal sealed class HealthCheckJsonWriter
 {

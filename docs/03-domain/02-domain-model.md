@@ -82,6 +82,10 @@ Ver catálogo completo en [../07-events/](../07-events/): CompraAgilDetected, Co
 
 Ejemplos a implementar como specification objects reutilizables: `CompraAbiertaSpec`, `CompraPorCerrarSpec(days)`, `RequiereOcrSpec(minTextDensity)`, `PropuestaEvaluableSpec`, `EvaluacionStaleSpec`.
 
-## Estado de implementación (FASE 4, 2026-08-16)
+## Estado de implementación (actualizado FASE 7, 2026-08-17)
 
-**Implementado:** el bounded context **Procurement** completo a nivel de dominio — `src/modules/procurement/Ppip.Procurement.Domain` (`CompraAgil`, `Institution`, `SyncExecution`, `SyncCheckpoint`, `RawCompraAgilPayload`, VOs `CompraAgilId`/`Money`/`DateRange`/`EstadoCompra`/`InstitutionRef`, entidad `ProductRequirement`, `SyncPolicy`) sobre el kernel DDD compartido `Ppip.BuildingBlocks.Domain` (`Entity<TId>`, `AggregateRoot<TId>`, `ValueObject`, `IDomainEvent`) — 42 tests xUnit, sin infraestructura (NFR-013, validado además por `tests/Ppip.ArchitectureTests`). Los demás contextos (Document Intelligence, Knowledge/RAG, Proposal Management, Compliance, Audit) todavía no tienen dominio implementado — se construyen en sus fases (7+, 9+, 12+, 14, 15).
+**Procurement** (FASE 4-6): dominio completo — `src/modules/procurement/Ppip.Procurement.Domain` (`CompraAgil`, `Institution`, `SyncExecution`, `SyncCheckpoint`, `RawCompraAgilPayload`, VOs `CompraAgilId`/`Money`/`DateRange`/`EstadoCompra`/`InstitutionRef`, entidad `ProductRequirement`, `SyncPolicy`, puertos en `Domain/Ports`) — 49 tests xUnit, sin infraestructura (NFR-013). Capa de aplicación (`SyncOrchestrator`) e infraestructura (Mongo/Redis/RabbitMQ) reales desde FASE 6.
+
+**Document Intelligence** (FASE 7, parcial — solo la porción de descarga/storage, UC-003 pasos 1-3): `src/modules/documents/Ppip.DocumentIntelligence.Domain` (`Document` — Identidad `DocumentId`, VOs `Sha256Hash`/`StorageRef`, entidad `DocumentVersion`, `DocumentStage` como máquina de estados simplificada para esta fase; `Policies/UrlAllowlistPolicy` y `Policies/PdfMagicBytes`) — 23 tests. **Todavía no implementados:** `DocumentClass` (textual/escaneado/mixto/tablas/imágenes/complejo), `DocumentPage`, `ExtractionReviewTask`, `DocumentChunk` — llegan en FASE 8-9 cuando exista clasificación/extracción/OCR/chunking real que los necesite.
+
+Los demás contextos (Knowledge/RAG, Proposal Management, Compliance, Audit) todavía no tienen dominio implementado — se construyen en sus fases (9+, 12+, 14, 15).

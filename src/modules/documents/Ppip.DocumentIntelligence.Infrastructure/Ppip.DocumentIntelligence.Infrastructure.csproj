@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>Ppip.DocumentIntelligence.Infrastructure</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="MongoDB.Driver" Version="3.*" />
+    <PackageReference Include="Minio" Version="6.*" />
+    <PackageReference Include="Microsoft.Extensions.Http.Resilience" Version="10.*" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Ppip.DocumentIntelligence.Domain\Ppip.DocumentIntelligence.Domain.csproj" />
+    <ProjectReference Include="..\..\..\building-blocks\Ppip.BuildingBlocks.Messaging\Ppip.BuildingBlocks.Messaging.csproj" />
+  </ItemGroup>
+</Project>

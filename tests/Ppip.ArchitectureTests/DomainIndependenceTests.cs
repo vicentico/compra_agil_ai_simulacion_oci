@@ -2,8 +2,10 @@ using System.Reflection;
 using NetArchTest.Rules;
 using Ppip.BuildingBlocks.Domain;
 using Ppip.BuildingBlocks.Messaging;
+using Ppip.DocumentIntelligence.Application;
 using Ppip.Procurement.Domain;
 using Xunit;
+using DocumentAggregate = Ppip.DocumentIntelligence.Domain.Document;
 
 namespace Ppip.ArchitectureTests;
 
@@ -31,6 +33,7 @@ public class DomainIndependenceTests
         { "Ppip.BuildingBlocks.Domain", typeof(Entity<>).Assembly },
         { "Ppip.BuildingBlocks.Messaging", typeof(OutboxMessage).Assembly },
         { "Ppip.Procurement.Domain", typeof(CompraAgil).Assembly },
+        { "Ppip.DocumentIntelligence.Domain", typeof(DocumentAggregate).Assembly },
     };
 
     [Theory]
@@ -57,6 +60,25 @@ public class DomainIndependenceTests
             .GetResult();
 
         Assert.True(result.IsSuccessful, FailureMessage("Ppip.Procurement.Domain", result));
+    }
+
+    /// <summary>
+    /// A diferencia de Ppip.Procurement.Application (que depende de
+    /// Infrastructure a propósito desde FASE 5, para IChileCompraClient),
+    /// Ppip.Document.Application NO tiene ese precedente: todos sus puertos
+    /// viven en Domain/Ports desde el diseño inicial (FASE 7). Esta regla
+    /// blinda esa decisión — si alguien agrega una referencia a
+    /// Infrastructure ahí, este test debe fallar.
+    /// </summary>
+    [Fact]
+    public void DocumentApplication_DoesNotDependOnInfrastructure()
+    {
+        var result = Types.InAssembly(typeof(DocumentDownloadOrchestrator).Assembly)
+            .Should()
+            .NotHaveDependencyOn("Ppip.DocumentIntelligence.Infrastructure")
+            .GetResult();
+
+        Assert.True(result.IsSuccessful, FailureMessage("Ppip.DocumentIntelligence.Application", result));
     }
 
     private static string FailureMessage(string assemblyName, TestResult result) =>

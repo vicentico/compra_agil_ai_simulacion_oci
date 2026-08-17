@@ -1,3 +1,4 @@
+using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 using MongoDB.Driver;
 using Ppip.BuildingBlocks.Messaging;
@@ -70,7 +71,13 @@ public sealed class MongoOutboxStore : IOutboxStore
 
     private sealed class OutboxMessageDocument
     {
+        // MongoDB.Driver 3.x exige representación explícita para Guid — sin
+        // esto, serializar/filtrar por un Guid lanza en runtime
+        // ("GuidRepresentation is Unspecified"). No lo detectó ningún test de
+        // FASE 6 porque el único repo probado contra Mongo real
+        // (MongoCompraAgilRepositoryTests) usa un id string, no Guid.
         [BsonId]
+        [BsonGuidRepresentation(GuidRepresentation.Standard)]
         public Guid Id { get; set; }
 
         public string EventType { get; set; } = string.Empty;

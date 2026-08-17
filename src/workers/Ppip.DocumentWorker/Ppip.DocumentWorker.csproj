@@ -5,5 +5,8 @@
   <ItemGroup>
     <ProjectReference Include="..\..\building-blocks\Ppip.BuildingBlocks.Health\Ppip.BuildingBlocks.Health.csproj" />
     <ProjectReference Include="..\..\building-blocks\Ppip.BuildingBlocks.Observability\Ppip.BuildingBlocks.Observability.csproj" />
+    <!-- FASE 7: composition root de UC-003 pasos 1-3. -->
+    <ProjectReference Include="..\..\modules\documents\Ppip.DocumentIntelligence.Application\Ppip.DocumentIntelligence.Application.csproj" />
+    <ProjectReference Include="..\..\modules\documents\Ppip.DocumentIntelligence.Infrastructure\Ppip.DocumentIntelligence.Infrastructure.csproj" />
   </ItemGroup>
 </Project>

@@ -283,6 +283,8 @@ services:
       Ppip__RabbitMq__Username: ${RABBITMQ_USER}
       Ppip__RabbitMq__Password: ${RABBITMQ_PASSWORD}
       Ppip__MinIo__Endpoint: http://minio:9000
+      Ppip__MinIo__AccessKey: ${MINIO_ROOT_USER}
+      Ppip__MinIo__SecretKey: ${MINIO_ROOT_PASSWORD}
       Ppip__Qdrant__Endpoint: http://qdrant:6333
       Ppip__Otel__Endpoint: http://otel-collector:4317
     networks: [app, data]

@@ -1,3 +1,4 @@
+using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 using MongoDB.Driver;
 using Ppip.Procurement.Domain;
@@ -33,7 +34,9 @@ public sealed class MongoRawPayloadRepository : IRawPayloadRepository
 
     private sealed class RawPayloadDocument
     {
+        // MongoDB.Driver 3.x exige representación explícita para Guid (ver comentario equivalente en MongoOutboxStore).
         [BsonId]
+        [BsonGuidRepresentation(GuidRepresentation.Standard)]
         public Guid Id { get; set; }
 
         public string Codigo { get; set; } = string.Empty;

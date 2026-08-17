@@ -1,3 +1,4 @@
+using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 using MongoDB.Driver;
 using Ppip.Procurement.Domain;
@@ -41,7 +42,9 @@ public sealed class MongoSyncExecutionRepository : ISyncExecutionRepository
 
     private sealed class SyncExecutionDocument
     {
+        // MongoDB.Driver 3.x exige representación explícita para Guid (ver comentario equivalente en MongoOutboxStore).
         [BsonId]
+        [BsonGuidRepresentation(GuidRepresentation.Standard)]
         public Guid Id { get; set; }
 
         public string CorrelationId { get; set; } = string.Empty;

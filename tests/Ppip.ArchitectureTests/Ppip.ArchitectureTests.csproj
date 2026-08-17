@@ -9,5 +9,7 @@
     <ProjectReference Include="..\..\src\building-blocks\Ppip.BuildingBlocks.Domain\Ppip.BuildingBlocks.Domain.csproj" />
     <ProjectReference Include="..\..\src\building-blocks\Ppip.BuildingBlocks.Messaging\Ppip.BuildingBlocks.Messaging.csproj" />
     <ProjectReference Include="..\..\src\modules\procurement\Ppip.Procurement.Domain\Ppip.Procurement.Domain.csproj" />
+    <ProjectReference Include="..\..\src\modules\documents\Ppip.DocumentIntelligence.Domain\Ppip.DocumentIntelligence.Domain.csproj" />
+    <ProjectReference Include="..\..\src\modules\documents\Ppip.DocumentIntelligence.Application\Ppip.DocumentIntelligence.Application.csproj" />
   </ItemGroup>
 </Project>
