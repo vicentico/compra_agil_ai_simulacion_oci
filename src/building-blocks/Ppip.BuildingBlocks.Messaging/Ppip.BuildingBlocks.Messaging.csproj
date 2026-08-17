@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>Ppip.BuildingBlocks.Messaging</RootNamespace>
+  </PropertyGroup>
+  <!-- Sin PackageReference a propósito: son contratos (envelope, puertos de
+       outbox/idempotencia) que la capa de aplicación usa sin conocer
+       RabbitMQ/Redis — los adaptadores reales (RabbitMqOutboxDispatcher,
+       RedisIdempotencyStore) llegan en FASE 5/6 cuando exista un consumidor
+       real. Ver docs/ROADMAP.md nota de cierre de FASE 4. -->
+</Project>

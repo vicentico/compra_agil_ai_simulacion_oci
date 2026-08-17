@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ppip.local/schemas/envelope.schema.json",
+  "title": "PPIP Event Envelope",
+  "description": "Envelope estandar de todo evento publicado en ppip.events. Ver docs/07-events/00-event-conventions.md.",
+  "type": "object",
+  "required": ["eventId", "eventType", "version", "timestamp", "correlationId", "producer", "isDemoData", "payload"],
+  "properties": {
+    "eventId": { "type": "string", "format": "uuid" },
+    "eventType": { "type": "string", "minLength": 1 },
+    "version": { "type": "integer", "minimum": 1 },
+    "timestamp": { "type": "string", "format": "date-time" },
+    "correlationId": { "type": "string", "minLength": 1 },
+    "causationId": { "type": ["string", "null"] },
+    "producer": { "type": "string", "minLength": 1 },
+    "isDemoData": { "type": "boolean" },
+    "payload": { "type": "object" }
+  },
+  "additionalProperties": false
+}

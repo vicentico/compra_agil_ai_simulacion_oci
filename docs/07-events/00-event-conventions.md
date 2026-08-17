@@ -24,7 +24,7 @@ Todo evento se publica en el exchange topic `ppip.events` con routing key `conte
 2. **Idempotencia**: consumidores dedupean por `eventId` (Redis SETNX + unique index); el efecto de negocio usa además idempotency key propia (ej. documentId+etapa+hash).
 3. **At-least-once**: outbox en el productor; ack tras efecto persistido; DLQ tras reintentos escalonados (30s/5m/1h).
 4. **Orden no garantizado**: cada handler verifica precondiciones; si el insumo no existe aún, re-encola con delay.
-5. **Schema**: JSON Schema por evento en esta carpeta (`schemas/` desde FASE 4); validado en contract tests productor/consumidor.
+5. **Schema**: JSON Schema por evento en [`schemas/`](schemas/) (envelope compartido + un schema por evento, `$ref` al envelope); validado en contract tests productor/consumidor. Implementado desde FASE 4 para los 2 eventos con productor real (`CompraAgilDetected.v1`, `CompraAgilUpdated.v1`); el resto del catálogo gana su schema cuando su productor se implemente — no antes (evita contratos especulativos sin código real que los emita).
 6. **Payload mínimo**: ids + hechos del cambio; los consumidores consultan el estado actual por id (evita payloads obesos y datos stale).
 
 ## Catálogo

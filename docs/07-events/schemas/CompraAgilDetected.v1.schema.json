@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ppip.local/schemas/CompraAgilDetected.v1.schema.json",
+  "title": "CompraAgilDetected.v1",
+  "description": "docs/07-events/01-example-compra-agil-detected.md",
+  "allOf": [
+    { "$ref": "envelope.schema.json" },
+    {
+      "type": "object",
+      "properties": {
+        "eventType": { "const": "CompraAgilDetected" },
+        "version": { "const": 1 },
+        "payload": {
+          "type": "object",
+          "required": ["compraAgilId", "codigo", "rawPayloadId", "documentRefs"],
+          "properties": {
+            "compraAgilId": { "type": "string", "minLength": 1 },
+            "codigo": { "type": "string", "minLength": 1 },
+            "nombre": { "type": "string" },
+            "organismoCodigo": { "type": "string" },
+            "fechaCierre": { "type": "string", "format": "date-time" },
+            "montoDisponible": {
+              "type": "object",
+              "required": ["amount", "currency"],
+              "properties": {
+                "amount": { "type": "number", "minimum": 0 },
+                "currency": { "type": "string", "minLength": 3, "maxLength": 3 }
+              },
+              "additionalProperties": false
+            },
+            "rawPayloadId": { "type": "string", "minLength": 1 },
+            "documentRefs": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["documentId", "sourceUrl"],
+                "properties": {
+                  "documentId": { "type": "string", "minLength": 1 },
+                  "sourceUrl": { "type": "string", "format": "uri" },
+                  "declaredName": { "type": "string" }
+                },
+                "additionalProperties": false
+              }
+            }
+          },
+          "additionalProperties": false
+        }
+      }
+    }
+  ]
+}

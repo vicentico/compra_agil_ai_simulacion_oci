@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>Ppip.Procurement.Domain</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\building-blocks\Ppip.BuildingBlocks.Domain\Ppip.BuildingBlocks.Domain.csproj" />
+  </ItemGroup>
+  <!-- Sin más PackageReference/ProjectReference a propósito: el dominio de
+       Procurement no conoce MongoDB/RabbitMQ/HTTP (NFR-013, ADR-001) —
+       validado por tests/Ppip.ArchitectureTests. La traducción a eventos de
+       integración (Ppip.BuildingBlocks.Messaging) es responsabilidad de la
+       capa de aplicación, que todavía no existe (FASE 5+). -->
+</Project>

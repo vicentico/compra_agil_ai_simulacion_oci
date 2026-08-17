@@ -1,0 +1,8 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>Ppip.BuildingBlocks.Domain</RootNamespace>
+  </PropertyGroup>
+  <!-- Sin PackageReference a propósito: kernel DDD reutilizable por todos los
+       bounded contexts (NFR-013 — el dominio no depende de infraestructura),
+       validado por tests/Ppip.ArchitectureTests. -->
+</Project>

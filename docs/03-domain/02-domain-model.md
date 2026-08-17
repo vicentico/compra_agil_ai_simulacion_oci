@@ -81,3 +81,7 @@ Ver catálogo completo en [../07-events/](../07-events/): CompraAgilDetected, Co
 ## Specifications
 
 Ejemplos a implementar como specification objects reutilizables: `CompraAbiertaSpec`, `CompraPorCerrarSpec(days)`, `RequiereOcrSpec(minTextDensity)`, `PropuestaEvaluableSpec`, `EvaluacionStaleSpec`.
+
+## Estado de implementación (FASE 4, 2026-08-16)
+
+**Implementado:** el bounded context **Procurement** completo a nivel de dominio — `src/modules/procurement/Ppip.Procurement.Domain` (`CompraAgil`, `Institution`, `SyncExecution`, `SyncCheckpoint`, `RawCompraAgilPayload`, VOs `CompraAgilId`/`Money`/`DateRange`/`EstadoCompra`/`InstitutionRef`, entidad `ProductRequirement`, `SyncPolicy`) sobre el kernel DDD compartido `Ppip.BuildingBlocks.Domain` (`Entity<TId>`, `AggregateRoot<TId>`, `ValueObject`, `IDomainEvent`) — 42 tests xUnit, sin infraestructura (NFR-013, validado además por `tests/Ppip.ArchitectureTests`). Los demás contextos (Document Intelligence, Knowledge/RAG, Proposal Management, Compliance, Audit) todavía no tienen dominio implementado — se construyen en sus fases (7+, 9+, 12+, 14, 15).

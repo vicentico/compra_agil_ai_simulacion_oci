@@ -8,7 +8,7 @@ Orden según MASTER PROMPT 2 §35. Cada fase cumple el Definition of Done (MP2 �
 | **1** | Docker infrastructure: compose con MongoDB, RabbitMQ, MinIO, Redis, Qdrant, Keycloak, Ollama, Traefik + esqueletos .NET 10 / Angular 20 | `docker compose up -d` todo healthy | ✅ Implementada (2026-08-16) — ver nota abajo |
 | **2** | Observability foundation: OTel en esqueletos, Collector, Prometheus, Grafana, Loki, dashboards base | Trace end-to-end visible de un request de prueba | ✅ Implementada (2026-08-16) — ver nota abajo |
 | **3** | Identity & security: realm Keycloak, JWT en API, RBAC, secretos, rate limiting | AuthZ matrix tests verdes | ✅ Implementada (2026-08-16) — ver nota abajo |
-| **4** | Procurement domain: dominio + building blocks (outbox, envelope de eventos, idempotencia) + architecture tests | Dominio testeado sin infraestructura | Pendiente |
+| **4** | Procurement domain: dominio + building blocks (outbox, envelope de eventos, idempotencia) + architecture tests | Dominio testeado sin infraestructura | ✅ Implementada (2026-08-16) — ver nota abajo |
 | **5** | ChileCompra integration: client resiliente + contract tests + spike API real (cierra OQ-01/02, ASM-01/08) | Fixtures reales grabados; manejo de errores probado | Pendiente |
 | **6** | Incremental synchronization: SyncWorker + checkpoint + eventos | UC-001 completo e idempotente | Pendiente |
 | **7** | Document storage: descarga validada (SSRF), MinIO, versionado por hash | UC-003 etapas 1-3 | Pendiente |
@@ -72,6 +72,18 @@ Implementado: realm Keycloak `ppip` (`infrastructure/docker/config/keycloak/ppip
 
 **Validado end-to-end contra el stack real** (no solo Testcontainers): con los 5 usuarios de prueba, `whoami`(viewer) → 200 para los 5 roles; `trace-check`(analyst) → 403 para `viewer.test`, 200 para `analyst.test`/`editor.test`/`admin.test`/`superadmin.test` (confirma la composición de roles); sin token → 401 en ambos; `admin.test` trae `roles:["viewer","editor","admin","analyst"]` en la respuesta (composición Keycloak, no lógica .NET).
 **Deliberadamente fuera de esta fase (recorte explícito):** client credentials para workers (ADR-010 — ningún worker tiene todavía un endpoint interno que llamar con su propia identidad); rate limiting por usuario autenticado (solo por IP por ahora); integración OIDC del SPA Angular (FASE 16); FileValidator/allowlist SSRF (FASE 7, Document Worker no descarga nada real aún). Detalle en `docs/12-security/01-security-controls.md`.
+
+## Nota de cierre de FASE 4 (2026-08-16)
+
+Implementado: kernel DDD compartido `Ppip.BuildingBlocks.Domain` (`Entity<TId>`, `AggregateRoot<TId>`, `ValueObject`, `IDomainEvent`); `Ppip.BuildingBlocks.Messaging` (`EventEnvelope<T>` con UUID v7 y routing key kebab-case, `OutboxMessage`, puertos `IOutboxStore`/`IIdempotencyStore` — sin adaptadores reales todavía, a propósito, ver más abajo); dominio completo de **Procurement** (`Ppip.Procurement.Domain`: `CompraAgil`, `Institution`, `SyncExecution`, `SyncCheckpoint`, `RawCompraAgilPayload`, VOs, `SyncPolicy`) que implementa exactamente UC-001 pasos 6-9 (detectar/actualizar/no-op por hash, transiciones de estado publicada→cerrada→adjudicada/desierta, contadores de `SyncExecution`); JSON Schema de `CompraAgilDetected.v1`/`CompraAgilUpdated.v1` en `docs/07-events/schemas/`. 4 proyectos de test nuevos: `Ppip.BuildingBlocks.Domain.Tests` (9), `Ppip.BuildingBlocks.Messaging.Tests` (9), `Ppip.Procurement.Domain.Tests` (42), `Ppip.ArchitectureTests` (4, NetArchTest.Rules — NFR-013), `Ppip.Events.Contracts.Tests` (4, JsonSchema.Net) — 68 tests nuevos, todos en verde en el primer intento salvo `Ppip.ArchitectureTests`, cuya efectividad real se verificó deliberadamente: se agregó una clase que referenciaba `MongoDB.Driver` dentro de `Ppip.Procurement.Domain`, el test la detectó y falló con el tipo exacto señalado, y se revirtió — confirma que la regla realmente protege NFR-013 y no solo pasa trivialmente.
+
+**A diferencia de FASE 1-3, esta fase no dependía de infraestructura real (Docker/Keycloak) para validarse** — es dominio puro, por diseño (criterio de éxito explícito: "dominio testeado sin infraestructura"). Sin bugs no obvios que reportar esta vez: la lógica compiló y pasó en el primer intento en los 5 proyectos de producción.
+
+**Deliberadamente fuera de esta fase (recorte explícito):**
+- **Adaptadores reales de `IOutboxStore`/`IIdempotencyStore`** (Mongo/Redis): no hay todavía ningún productor/consumidor real que los necesite — llegan en FASE 6 con el primer evento que Sync Worker publique de verdad.
+- **Capa de aplicación de Procurement** (`SyncOrchestrator`, mapeo `IDomainEvent`→`EventEnvelope`, `ChileCompraClient`): FASE 5 (integración con la API real de ChileCompra) y FASE 6 (sincronización incremental end-to-end).
+- **Los otros 6 bounded contexts** (Document Intelligence, Knowledge/RAG, Proposal Management, Compliance, Audit, Identity) no tienen dominio implementado todavía — se construyen en sus fases naturales, no de forma preventiva.
+- **17 de los 19 eventos del catálogo** no tienen JSON Schema todavía — se agregan cuando su productor exista, evitando contratos que documenten código que no existe.
 
 ## Gates
 

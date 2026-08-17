@@ -7,7 +7,7 @@
 | Rol que se traspasa | Tech Lead / Arquitecto del proyecto (agente IA con supervisión del usuario) |
 | Ubicación del repositorio | `C:\ClaudeCowork\Agente_Compras_Agiles` (raíz del repo = carpeta del proyecto) |
 | Sesión de origen | Claude Cowork, modelo configurado `claude-fable-5` |
-| Estado global | **FASE 0 aprobada · FASE 1 (Docker infrastructure) · FASE 2 (Observability) · FASE 3 (Identity & security) implementadas y validadas end-to-end** (2026-08-16). Próxima: FASE 4 — Procurement domain. |
+| Estado global | **FASE 0 aprobada · FASE 1-4 (Docker infra, Observability, Identity & security, Procurement domain) implementadas** (2026-08-16). Próxima: FASE 5 — ChileCompra integration. |
 | Documentos rectores | `Master Prompt — OCI Local Simulator...md` (QUÉ construir) + MASTER PROMPT 2 (CÓMO construirlo — entregado por chat, ver §3.6 de este documento) |
 
 > **Instrucción para el asistente entrante:** lee este documento completo, luego `README.md`, `docs/ROADMAP.md` y `docs/architecture-review-package.md`. Con eso puedes asumir el rol sin preguntas repetitivas. Ante cualquier duda de detalle, la respuesta está en `docs/` — este proyecto se rige por el principio "el sistema debe comprenderse desde docs/ sin leer el código".
@@ -130,10 +130,18 @@ C:\ClaudeCowork\Agente_Compras_Agiles\
 │   ├── building-blocks/Ppip.BuildingBlocks.Health/          ← FASE 1
 │   ├── building-blocks/Ppip.BuildingBlocks.Observability/   ← FASE 2 (OTel + CorrelationId)
 │   ├── building-blocks/Ppip.BuildingBlocks.Security/        ← FASE 3 (JWT + RBAC contra Keycloak)
+│   ├── building-blocks/Ppip.BuildingBlocks.Domain/          ← FASE 4 (kernel DDD: Entity/AggregateRoot/ValueObject)
+│   ├── building-blocks/Ppip.BuildingBlocks.Messaging/       ← FASE 4 (EventEnvelope, Outbox/Idempotency — puertos)
+│   ├── modules/procurement/Ppip.Procurement.Domain/         ← FASE 4 (CompraAgil, SyncPolicy... sin infra, NFR-013)
 │   ├── services/Ppip.PlatformApi/, workers/Ppip.{Sync,Document,Ai}Worker/  ← FASE 1, instrumentados en FASE 2+3
 │   └── apps/frontend/                ← FASE 1 (Angular 20.3)
+├── docs/07-events/schemas/           ← FASE 4: JSON Schema de CompraAgilDetected/Updated.v1
 ├── tests/Ppip.BuildingBlocks.Observability.Tests/  ← FASE 2, xUnit (4 tests, CorrelationIdMiddleware)
 ├── tests/Ppip.PlatformApi.Tests/                   ← FASE 3, xUnit (12 tests, RBAC vs Keycloak real/Testcontainers)
+├── tests/Ppip.BuildingBlocks.Domain.Tests/, Ppip.BuildingBlocks.Messaging.Tests/  ← FASE 4 (9+9 tests)
+├── tests/Ppip.Procurement.Domain.Tests/            ← FASE 4, xUnit (42 tests)
+├── tests/Ppip.ArchitectureTests/                   ← FASE 4, NetArchTest.Rules (NFR-013, 4 tests)
+├── tests/Ppip.Events.Contracts.Tests/              ← FASE 4, JsonSchema.Net (4 tests)
 └── _to_delete/                   ← tar.gz de entregas pasadas; el usuario puede borrarlo
 ```
 
@@ -152,15 +160,17 @@ C:\ClaudeCowork\Agente_Compras_Agiles\
 
 **Esta fase encontró y corrigió 3 bugs no obvios que solo aparecen validando contra Keycloak real** (detalle completo en `docs/ROADMAP.md` nota de cierre de FASE 3 — vale la pena leerlo antes de tocar auth): (1) Keycloak 26 evalúa `VERIFY_PROFILE` dinámicamente en cada login — usuarios sin `firstName`/`lastName` fallan con "Account is not fully set up" aunque `requiredActions` esté vacío. (2) Leer `builder.Configuration` de forma síncrona en `Program.cs` captura valores **anteriores** al override de `WebApplicationFactory` en tests — hay que configurar options vía `AddOptions<T>().Configure<IConfiguration>(...)` (resolución perezosa), no leyendo config directo en el método de extensión. (3) Con `KC_HOSTNAME_STRICT=false`, Keycloak embebe su hostname externo (`auth.*.localhost`) en `jwks_uri` sin importar por qué DNS se lo pidieron — y varios clientes HTTP resuelven `*.localhost` siempre a loopback (RFC 6761), así que seguir esa URL termina conectando al propio servicio, no a Keycloak. Se corrigió con un alias de red Docker + un `ConnectCallback` que fuerza la conexión física al host:puerto real de Keycloak.
 
-Prompts y lógica de dominio real **todavía no existen** — eso es FASE 4+.
+7. **FASE 4 — Procurement domain: IMPLEMENTADA (2026-08-16).** Kernel DDD compartido `Ppip.BuildingBlocks.Domain` (`Entity<TId>`, `AggregateRoot<TId>`, `ValueObject`, `IDomainEvent`); `Ppip.BuildingBlocks.Messaging` (`EventEnvelope<T>` con UUID v7 + routing key kebab-case, `OutboxMessage`, puertos `IOutboxStore`/`IIdempotencyStore` — sin adaptadores todavía, a propósito); dominio completo de **Procurement** (`Ppip.Procurement.Domain`: `CompraAgil`, `Institution`, `SyncExecution`, `SyncCheckpoint`, `RawCompraAgilPayload`, `SyncPolicy`) que implementa UC-001 pasos 6-9; JSON Schema de `CompraAgilDetected.v1`/`CompraAgilUpdated.v1`. 5 proyectos de test nuevos, 68 tests nuevos — **todos en verde al primer intento** (a diferencia de FASE 2/3, esta fase es dominio puro sin infraestructura real que validar, por diseño). La efectividad de `Ppip.ArchitectureTests` se verificó deliberadamente inyectando una violación (clase usando `MongoDB.Driver` dentro del dominio) y confirmando que el test la detecta y falla con el tipo exacto, antes de revertir.
+
+Prompts y dominio de los otros 6 bounded contexts **todavía no existen** — se construyen en sus fases (Document Intelligence F7+, Knowledge/RAG F9+, Proposal F12+, Compliance F14, Audit F15).
 
 ### 5.2 Decisiones del usuario ya tomadas (no volver a preguntar)
 Idioma docs: español · repo en la raíz de la carpeta · cambios 1 y 2 como SHOULD · gate FASE 0→1 aprobado · recomendador heurístico ahora, ML después · outcomes manuales + API si el spike la confirma · notificaciones in-app + email digest (MailHog local).
 
 ### 5.3 La tarea inmediata
-**FASE 4 — Procurement domain:** dominio + building blocks (outbox, envelope de eventos, idempotencia) + architecture tests. Entregable: dominio testeado sin infraestructura.
+**FASE 5 — ChileCompra integration:** client resiliente (`IChileCompraClient` + adaptador HTTP con circuit breaker/backoff) + contract tests (WireMock.NET) + **spike con la API real** que cierra OQ-01 (contrato/paginación reales), OQ-02 (descarga de adjuntos), OQ-10 (¿expone adjudicaciones/OC?) y valida ASM-01/ASM-08 (términos de uso). Requiere ticket/API key de ChileCompra (fuera del código, gestión del usuario). Entregable: fixtures reales grabados; manejo de errores probado.
 
-Nota operativa para retomar el stack: `make up && make up-obs && make smoke && make smoke-obs`. Traefik puede fallar a bindear el puerto 80 si el host ya lo tiene ocupado (pasó en las sesiones de FASE 2 y 3, por otro proceso ajeno al proyecto) — no es un bug del compose; en ese caso los servicios de app siguen accesibles vía `docker exec <container> curl http://localhost:8080/...` o publicando temporalmente otro puerto. Para probar auth manualmente sin Traefik, agregar los headers `X-Forwarded-Host/Proto/Port` que Traefik normalmente añade (ver `infrastructure/docker/README.md`).
+Nota operativa para retomar el stack: `make up && make up-obs && make smoke && make smoke-obs`. Traefik puede fallar a bindear el puerto 80 si el host ya lo tiene ocupado (pasó en las sesiones de FASE 2 y 3, por otro proceso ajeno al proyecto) — no es un bug del compose; en ese caso los servicios de app siguen accesibles vía `docker exec <container> curl http://localhost:8080/...` o publicando temporalmente otro puerto. Para probar auth manualmente sin Traefik, agregar los headers `X-Forwarded-Host/Proto/Port` que Traefik normalmente añade (ver `infrastructure/docker/README.md`). Para el dominio de FASE 4 no hace falta levantar nada — `dotnet test tests/Ppip.Procurement.Domain.Tests` y `tests/Ppip.ArchitectureTests` corren sin Docker.
 
 En paralelo (preparación de FASE 5, puede adelantarse): conseguir el ticket/API key de ChileCompra y ejecutar el **spike** que cierra OQ-01 (contrato real y paginación), OQ-02 (descarga de adjuntos), OQ-10 (¿expone adjudicaciones/OC?) y valida ASM-01/ASM-08 (términos de uso).
 
@@ -177,4 +187,4 @@ RSK-02 (alucinaciones — mitigación en cada capa), RSK-05 (sobreingeniería �
 El registro npm ya publica Angular 22 estable (2026-08). Se implementó el frontend en **Angular 20.3.x** por ser la versión ya documentada en el stack (ARCHITECTURE.md) — no se saltó de versión sin ADR. Si el equipo quiere adoptar 22, requiere una decisión explícita, no un cambio silencioso de un scaffold.
 
 ---
-*Fin del handover. El asistente entrante debe confirmar lectura de README + ROADMAP + `infrastructure/docker/README.md` y proceder con la tarea inmediata (§5.3, FASE 4) siguiendo el formato de respuesta §49.*
+*Fin del handover. El asistente entrante debe confirmar lectura de README + ROADMAP + `infrastructure/docker/README.md` y proceder con la tarea inmediata (§5.3, FASE 5) siguiendo el formato de respuesta §49.*

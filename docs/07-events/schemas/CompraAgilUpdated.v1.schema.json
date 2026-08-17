@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ppip.local/schemas/CompraAgilUpdated.v1.schema.json",
+  "title": "CompraAgilUpdated.v1",
+  "description": "docs/07-events/00-event-conventions.md (catalogo: compraAgilId, version, changedFields[], rawPayloadId)",
+  "allOf": [
+    { "$ref": "envelope.schema.json" },
+    {
+      "type": "object",
+      "properties": {
+        "eventType": { "const": "CompraAgilUpdated" },
+        "version": { "const": 1 },
+        "payload": {
+          "type": "object",
+          "required": ["compraAgilId", "version", "changedFields", "rawPayloadId"],
+          "properties": {
+            "compraAgilId": { "type": "string", "minLength": 1 },
+            "version": { "type": "integer", "minimum": 2 },
+            "changedFields": {
+              "type": "array",
+              "items": { "type": "string" },
+              "minItems": 1
+            },
+            "rawPayloadId": { "type": "string", "minLength": 1 }
+          },
+          "additionalProperties": false
+        }
+      }
+    }
+  ]
+}
