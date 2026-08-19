@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ppip.local/schemas/DocumentChunked.v1.schema.json",
+  "title": "DocumentChunked.v1",
+  "description": "docs/07-events/00-event-conventions.md catalogo. Productor: Ppip.DocumentIntelligence.Application.DocumentEventPublisher (FASE 8).",
+  "allOf": [
+    { "$ref": "envelope.schema.json" },
+    {
+      "type": "object",
+      "properties": {
+        "eventType": { "const": "DocumentChunked" },
+        "version": { "const": 1 },
+        "payload": {
+          "type": "object",
+          "required": ["documentId", "versionId", "chunkCount", "chunkIds"],
+          "properties": {
+            "documentId": { "type": "string", "minLength": 1 },
+            "versionId": { "type": "string", "minLength": 1 },
+            "chunkCount": { "type": "integer", "minimum": 0 },
+            "chunkIds": {
+              "type": "array",
+              "items": { "type": "string", "minLength": 1 }
+            }
+          },
+          "additionalProperties": false
+        }
+      }
+    }
+  ]
+}

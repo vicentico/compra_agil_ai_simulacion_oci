@@ -20,3 +20,34 @@ public sealed record DocumentDownloaded(
     string Sha256Hash,
     long SizeBytes,
     string CorrelationId) : IDomainEvent;
+
+/// <summary>Se levanta al completar clasificación + extracción de texto (+ OCR si aplicó) — UC-003 pasos 4-8.</summary>
+public sealed record DocumentExtracted(
+    Guid EventId,
+    DateTimeOffset OccurredAt,
+    string DocumentId,
+    string VersionId,
+    int Pages,
+    string Classification,
+    double AvgTextDensity,
+    string CorrelationId) : IDomainEvent;
+
+/// <summary>Se levanta solo si al menos una página pasó por OCR (FR-014) — UC-003 paso 6.</summary>
+public sealed record OcrCompleted(
+    Guid EventId,
+    DateTimeOffset OccurredAt,
+    string DocumentId,
+    string VersionId,
+    IReadOnlyList<int> PagesOcr,
+    double AvgConfidence,
+    string CorrelationId) : IDomainEvent;
+
+/// <summary>Se levanta al completar el chunking semántico — UC-003 paso 9.</summary>
+public sealed record DocumentChunked(
+    Guid EventId,
+    DateTimeOffset OccurredAt,
+    string DocumentId,
+    string VersionId,
+    int ChunkCount,
+    IReadOnlyList<string> ChunkIds,
+    string CorrelationId) : IDomainEvent;

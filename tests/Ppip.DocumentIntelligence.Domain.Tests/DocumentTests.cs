@@ -111,4 +111,103 @@ public class DocumentTests
         Assert.Equal(DocumentStage.Downloaded, document.Stage);
         Assert.Single(document.Versions);
     }
+
+    [Fact]
+    public void CompleteExtraction_TextualDocument_RaisesDocumentExtracted()
+    {
+        var document = DetectDefault();
+        document.CompleteDownload(NewVersion(), "corr-2");
+        document.PullDomainEvents();
+
+        var pages = new[] { DocumentPage.FromNativeText(1, "texto nativo", textDensity: 0.02) };
+        document.CompleteExtraction(DocumentClass.Textual, pages, "corr-3");
+
+        Assert.Equal(DocumentProcessingStage.Extracted, document.CurrentVersion!.ProcessingStage);
+        Assert.Equal(DocumentClass.Textual, document.CurrentVersion.Classification);
+        var evento = Assert.Single(document.DomainEvents);
+        var extracted = Assert.IsType<DocumentExtracted>(evento);
+        Assert.Equal(1, extracted.Pages);
+        Assert.Equal("Textual", extracted.Classification);
+    }
+
+    [Fact]
+    public void CompleteExtraction_WithoutDownloadedVersion_Throws()
+    {
+        var document = DetectDefault();
+
+        Assert.Throws<InvalidOperationException>(() => document.CompleteExtraction(DocumentClass.Textual, [], "corr-2"));
+    }
+
+    [Fact]
+    public void ReportOcrCompleted_NoOcrPages_DoesNotRaiseEvent()
+    {
+        var document = DetectDefault();
+        document.CompleteDownload(NewVersion(), "corr-2");
+        var pages = new[] { DocumentPage.FromNativeText(1, "texto nativo", textDensity: 0.02) };
+        document.CompleteExtraction(DocumentClass.Textual, pages, "corr-3");
+        document.PullDomainEvents();
+
+        document.ReportOcrCompleted("corr-4");
+
+        Assert.Empty(document.DomainEvents);
+    }
+
+    [Fact]
+    public void ReportOcrCompleted_WithOcrPages_RaisesOcrCompleted()
+    {
+        var document = DetectDefault();
+        document.CompleteDownload(NewVersion(), "corr-2");
+        var page = DocumentPage.FromNativeText(1, string.Empty, textDensity: 0.0002);
+        page.ApplyOcr("texto ocr", confidence: 0.87);
+        document.CompleteExtraction(DocumentClass.Scanned, [page], "corr-3");
+        document.PullDomainEvents();
+
+        document.ReportOcrCompleted("corr-4");
+
+        var evento = Assert.Single(document.DomainEvents);
+        var ocrCompleted = Assert.IsType<OcrCompleted>(evento);
+        Assert.Equal([1], ocrCompleted.PagesOcr);
+        Assert.Equal(0.87, ocrCompleted.AvgConfidence);
+    }
+
+    [Fact]
+    public void CompleteChunking_RaisesDocumentChunkedAndMarksVersionChunked()
+    {
+        var document = DetectDefault();
+        document.CompleteDownload(NewVersion(), "corr-2");
+        document.CompleteExtraction(DocumentClass.Textual, [DocumentPage.FromNativeText(1, "texto", 0.02)], "corr-3");
+        document.PullDomainEvents();
+
+        var chunk = DocumentChunk.Create(document.Id, document.CurrentVersion!.Id, document.CompraAgilId, 1, null, null, ChunkType.Paragraph, "texto", tokenCount: 1);
+        document.CompleteChunking([chunk], "corr-4");
+
+        Assert.Equal(DocumentProcessingStage.Chunked, document.CurrentVersion.ProcessingStage);
+        var evento = Assert.Single(document.DomainEvents);
+        var chunked = Assert.IsType<DocumentChunked>(evento);
+        Assert.Equal(1, chunked.ChunkCount);
+    }
+
+    [Fact]
+    public void CompleteExtraction_AfterChunked_Throws()
+    {
+        var document = DetectDefault();
+        document.CompleteDownload(NewVersion(), "corr-2");
+        document.CompleteExtraction(DocumentClass.Textual, [DocumentPage.FromNativeText(1, "texto", 0.02)], "corr-3");
+        var chunk = DocumentChunk.Create(document.Id, document.CurrentVersion!.Id, document.CompraAgilId, 1, null, null, ChunkType.Paragraph, "texto", 1);
+        document.CompleteChunking([chunk], "corr-4");
+
+        Assert.Throws<InvalidOperationException>(() => document.CompleteExtraction(DocumentClass.Textual, [], "corr-5"));
+    }
+
+    [Fact]
+    public void MarkProcessingFailed_SetsFailureReasonOnCurrentVersion()
+    {
+        var document = DetectDefault();
+        document.CompleteDownload(NewVersion(), "corr-2");
+
+        document.MarkProcessingFailed("PDF corrupto");
+
+        Assert.Equal(DocumentProcessingStage.ProcessingFailed, document.CurrentVersion!.ProcessingStage);
+        Assert.Equal("PDF corrupto", document.CurrentVersion.ProcessingFailureReason);
+    }
 }

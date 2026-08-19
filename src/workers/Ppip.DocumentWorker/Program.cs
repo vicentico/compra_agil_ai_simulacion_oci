@@ -3,16 +3,19 @@ using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Ppip.BuildingBlocks.Health;
 using Ppip.BuildingBlocks.Observability;
 using Ppip.DocumentIntelligence.Application;
+using Ppip.DocumentIntelligence.Domain;
 using Ppip.DocumentIntelligence.Domain.Ports;
 using Ppip.DocumentIntelligence.Infrastructure;
 using Ppip.DocumentIntelligence.Infrastructure.Http;
+using Ppip.DocumentIntelligence.Infrastructure.Ocr;
 using Ppip.DocumentIntelligence.Infrastructure.Persistence;
 using Ppip.DocumentIntelligence.Infrastructure.Storage;
 using Ppip.DocumentWorker;
 
 // ============================================================================
-// Ppip.DocumentWorker — UC-003 pasos 1-3 (FASE 7): descarga validada (SSRF),
-// MinIO, versionado por hash. Clasificación/extracción/OCR/chunking: FASE 8-9.
+// Ppip.DocumentWorker — UC-003 pasos 1-3 (FASE 7: descarga validada SSRF,
+// MinIO, hash) + pasos 4-9 (FASE 8: clasificación, extracción, OCR, chunking).
+// Embedding/Indexing (pasos 10-11): FASE 9.
 // ============================================================================
 
 var builder = WebApplication.CreateBuilder(args);
@@ -28,12 +31,16 @@ var qdrantEndpoint = config["Ppip:Qdrant:Endpoint"] ?? string.Empty;
 builder.AddDocumentDownloader();
 builder.AddDocumentStorage();
 builder.AddDocumentPersistence();
+builder.AddDocumentIntelligenceProcessing();
 
 builder.Services.AddOptions<DocumentDownloadOptions>()
     .Bind(config.GetSection(DocumentDownloadOptions.SectionName));
+builder.Services.AddOptions<DocumentProcessingOptions>()
+    .Bind(config.GetSection(DocumentProcessingOptions.SectionName));
 builder.Services.AddSingleton<IMalwareScanner, NoOpMalwareScanner>();
 builder.Services.AddSingleton<DocumentEventPublisher>();
 builder.Services.AddSingleton<DocumentDownloadOrchestrator>();
+builder.Services.AddSingleton<DocumentProcessingOrchestrator>();
 
 builder.Services.AddHostedService<HeartbeatWorker>();
 
@@ -75,6 +82,31 @@ app.MapPost("/internal/documents/download", async (DownloadRequest request, Docu
         documentId = document.Id.ToString(),
         document.Stage,
         document.FailureReason,
+    });
+});
+
+// Disparo manual/demo de UC-003 pasos 4-9 (FASE 8) — mismo criterio que el
+// endpoint de descarga: sin consumidor RabbitMQ real todavía (docs/ROADMAP.md
+// nota de cierre de FASE 8), procesa la versión actual ya descargada de un
+// documento existente.
+app.MapPost("/internal/documents/{documentId}/process", async (string documentId, DocumentProcessingOrchestrator orchestrator, CancellationToken cancellationToken) =>
+{
+    if (!Guid.TryParse(documentId, out var parsedId))
+    {
+        return Results.BadRequest(new { error = "documentId debe ser un GUID válido." });
+    }
+
+    var correlationId = $"doc-process-manual-{Guid.CreateVersion7()}";
+    var document = await orchestrator.ProcessAsync(DocumentId.From(parsedId), correlationId, cancellationToken);
+    var version = document.CurrentVersion;
+    return Results.Accepted(value: new
+    {
+        correlationId,
+        documentId = document.Id.ToString(),
+        processingStage = version?.ProcessingStage,
+        classification = version?.Classification,
+        pageCount = version?.Pages.Count,
+        failureReason = version?.ProcessingFailureReason,
     });
 });
 

@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ppip.local/schemas/DocumentExtracted.v1.schema.json",
+  "title": "DocumentExtracted.v1",
+  "description": "docs/07-events/00-event-conventions.md catalogo. Productor: Ppip.DocumentIntelligence.Application.DocumentEventPublisher (FASE 8).",
+  "allOf": [
+    { "$ref": "envelope.schema.json" },
+    {
+      "type": "object",
+      "properties": {
+        "eventType": { "const": "DocumentExtracted" },
+        "version": { "const": 1 },
+        "payload": {
+          "type": "object",
+          "required": ["documentId", "versionId", "pages", "classification", "textDensity"],
+          "properties": {
+            "documentId": { "type": "string", "minLength": 1 },
+            "versionId": { "type": "string", "minLength": 1 },
+            "pages": { "type": "integer", "minimum": 0 },
+            "classification": {
+              "type": "string",
+              "enum": ["Textual", "Scanned", "Mixed", "Tables", "Images", "Complex"]
+            },
+            "textDensity": { "type": "number", "minimum": 0 }
+          },
+          "additionalProperties": false
+        }
+      }
+    }
+  ]
+}

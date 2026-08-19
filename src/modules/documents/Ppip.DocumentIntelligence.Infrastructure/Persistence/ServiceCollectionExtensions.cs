@@ -23,6 +23,7 @@ public static class ServiceCollectionExtensions
         });
 
         builder.Services.AddSingleton<IDocumentRepository, MongoDocumentRepository>();
+        builder.Services.AddSingleton<IDocumentChunkRepository, MongoDocumentChunkRepository>();
         builder.Services.AddSingleton<IOutboxStore, MongoOutboxStore>();
 
         return builder;

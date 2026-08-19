@@ -21,3 +21,25 @@ public sealed record DocumentDownloadedPayload(
 public sealed record StorageRefPayload(
     [property: JsonPropertyName("bucket")] string Bucket,
     [property: JsonPropertyName("key")] string Key);
+
+/// <summary>Payload de <c>DocumentExtracted.v1</c> — clasificación + extracción de texto (+ OCR si aplicó ya unificado en las páginas).</summary>
+public sealed record DocumentExtractedPayload(
+    [property: JsonPropertyName("documentId")] string DocumentId,
+    [property: JsonPropertyName("versionId")] string VersionId,
+    [property: JsonPropertyName("pages")] int Pages,
+    [property: JsonPropertyName("classification")] string Classification,
+    [property: JsonPropertyName("textDensity")] double TextDensity);
+
+/// <summary>Payload de <c>OcrCompleted.v1</c> — solo se publica si al menos una página pasó por OCR (FR-014).</summary>
+public sealed record OcrCompletedPayload(
+    [property: JsonPropertyName("documentId")] string DocumentId,
+    [property: JsonPropertyName("versionId")] string VersionId,
+    [property: JsonPropertyName("pagesOcr")] IReadOnlyList<int> PagesOcr,
+    [property: JsonPropertyName("avgConfidence")] double AvgConfidence);
+
+/// <summary>Payload de <c>DocumentChunked.v1</c>.</summary>
+public sealed record DocumentChunkedPayload(
+    [property: JsonPropertyName("documentId")] string DocumentId,
+    [property: JsonPropertyName("versionId")] string VersionId,
+    [property: JsonPropertyName("chunkCount")] int ChunkCount,
+    [property: JsonPropertyName("chunkIds")] IReadOnlyList<string> ChunkIds);

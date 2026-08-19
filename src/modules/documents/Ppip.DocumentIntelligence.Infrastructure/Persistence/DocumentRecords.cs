@@ -25,7 +25,13 @@ internal sealed class DocumentRecord
     public string? FailureReason { get; set; }
 }
 
-/// <summary>Modelo de persistencia de `document_versions` (docs/08-data/01: unique index `{documentId, sha256}`) — append-only, nunca se actualiza ni borra.</summary>
+/// <summary>
+/// Modelo de persistencia de `document_versions` (docs/08-data/01). El
+/// binario (Sha256/Bucket/Key/SizeBytes/DownloadedAt) es inmutable, pero los
+/// campos de procesamiento (FASE 8) sí se actualizan sobre la misma versión
+/// a medida que avanza el pipeline — por eso el repositorio hace upsert por
+/// Id, no solo insert de versiones nuevas por hash.
+/// </summary>
 internal sealed class DocumentVersionRecord
 {
     [BsonId]
@@ -44,4 +50,31 @@ internal sealed class DocumentVersionRecord
     public long SizeBytes { get; set; }
 
     public DateTimeOffset DownloadedAt { get; set; }
+
+    public string ProcessingStage { get; set; } = string.Empty;
+
+    public string? Classification { get; set; }
+
+    public string? ProcessingFailureReason { get; set; }
+}
+
+/// <summary>Modelo de persistencia de `document_pages` (docs/08-data/01) — colección propia, consultada por VersionId.</summary>
+internal sealed class DocumentPageRecord
+{
+    [BsonId]
+    [BsonGuidRepresentation(GuidRepresentation.Standard)]
+    public Guid Id { get; set; }
+
+    [BsonGuidRepresentation(GuidRepresentation.Standard)]
+    public Guid VersionId { get; set; }
+
+    public int PageNumber { get; set; }
+
+    public string Text { get; set; } = string.Empty;
+
+    public string ExtractionMethod { get; set; } = string.Empty;
+
+    public double TextDensity { get; set; }
+
+    public double? OcrConfidence { get; set; }
 }

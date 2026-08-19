@@ -1,6 +1,11 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.*" />
+    <!-- Solo para generar fixtures PDF reales en tests (OQ-02 sigue abierta:
+         no hay binarios reales de ChileCompra) — nunca se referencia desde
+         producción, la advertencia NU1902/1903 de su dependencia transitiva
+         (SixLabors.ImageSharp) no tiene impacto fuera de este proyecto de test. -->
+    <PackageReference Include="PdfSharpCore" Version="1.3.*" />
     <PackageReference Include="Testcontainers.Minio" Version="4.*" />
     <PackageReference Include="Testcontainers.MongoDb" Version="4.*" />
     <PackageReference Include="xunit" Version="2.*" />

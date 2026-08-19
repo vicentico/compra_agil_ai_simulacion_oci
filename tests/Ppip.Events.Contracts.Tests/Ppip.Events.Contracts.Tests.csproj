@@ -15,5 +15,8 @@
          (Ppip.Procurement.Application), no solo el JSON de ejemplo escrito a
          mano — ver ProducerSerializationTests.cs. -->
     <ProjectReference Include="..\..\src\modules\procurement\Ppip.Procurement.Application\Ppip.Procurement.Application.csproj" />
+    <!-- FASE 8: idem para el productor de Document Intelligence — ver
+         DocumentEventSerializationTests.cs. -->
+    <ProjectReference Include="..\..\src\modules\documents\Ppip.DocumentIntelligence.Application\Ppip.DocumentIntelligence.Application.csproj" />
   </ItemGroup>
 </Project>

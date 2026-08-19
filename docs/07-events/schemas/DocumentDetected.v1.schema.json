@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ppip.local/schemas/DocumentDetected.v1.schema.json",
+  "title": "DocumentDetected.v1",
+  "description": "docs/07-events/00-event-conventions.md catalogo. Productor: Ppip.DocumentIntelligence.Application.DocumentEventPublisher (FASE 7).",
+  "allOf": [
+    { "$ref": "envelope.schema.json" },
+    {
+      "type": "object",
+      "properties": {
+        "eventType": { "const": "DocumentDetected" },
+        "version": { "const": 1 },
+        "payload": {
+          "type": "object",
+          "required": ["documentId", "compraAgilId", "sourceUrl", "declaredName"],
+          "properties": {
+            "documentId": { "type": "string", "minLength": 1 },
+            "compraAgilId": { "type": "string", "minLength": 1 },
+            "sourceUrl": { "type": "string", "format": "uri" },
+            "declaredName": { "type": "string" }
+          },
+          "additionalProperties": false
+        }
+      }
+    }
+  ]
+}

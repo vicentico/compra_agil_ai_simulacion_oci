@@ -27,4 +27,16 @@ public sealed class MinioObjectStorage(IMinioClient client) : IObjectStorage
         await client.PutObjectAsync(putArgs, cancellationToken);
         return StorageRef.From(bucket, key);
     }
+
+    public async Task<byte[]> LoadAsync(StorageRef storageRef, CancellationToken cancellationToken = default)
+    {
+        using var buffer = new MemoryStream();
+        var getArgs = new GetObjectArgs()
+            .WithBucket(storageRef.Bucket)
+            .WithObject(storageRef.Key)
+            .WithCallbackStream(stream => stream.CopyTo(buffer));
+
+        await client.GetObjectAsync(getArgs, cancellationToken);
+        return buffer.ToArray();
+    }
 }

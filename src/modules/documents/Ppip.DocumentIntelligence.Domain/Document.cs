@@ -134,6 +134,45 @@ public sealed class Document : AggregateRoot<DocumentId>
         return true;
     }
 
+    /// <summary>UC-003 pasos 4-8 (FASE 8): clasificación + extracción + OCR ya unificados en las páginas finales de <see cref="CurrentVersion"/> — levanta <see cref="DocumentExtracted"/>.</summary>
+    public void CompleteExtraction(DocumentClass classification, IEnumerable<DocumentPage> pages, string correlationId)
+    {
+        var version = RequireCurrentVersion();
+        var pageList = pages.ToList();
+        version.CompleteExtraction(classification, pageList);
+
+        var avgDensity = pageList.Count > 0 ? pageList.Average(p => p.TextDensity) : 0d;
+        Raise(new DocumentExtracted(Guid.CreateVersion7(), DateTimeOffset.UtcNow, Id.ToString(), version.Id.ToString(), pageList.Count, classification.ToString(), avgDensity, correlationId));
+    }
+
+    /// <summary>Levanta <see cref="OcrCompleted"/> solo si al menos una página de <see cref="CurrentVersion"/> pasó por OCR (FR-014) — no-op silencioso para documentos puramente textuales.</summary>
+    public void ReportOcrCompleted(string correlationId)
+    {
+        var version = RequireCurrentVersion();
+        var ocrPages = version.Pages.Where(p => p.ExtractionMethod == ExtractionMethod.Ocr).ToList();
+        if (ocrPages.Count == 0)
+        {
+            return;
+        }
+
+        var avgConfidence = ocrPages.Average(p => p.OcrConfidence ?? 0d);
+        Raise(new OcrCompleted(Guid.CreateVersion7(), DateTimeOffset.UtcNow, Id.ToString(), version.Id.ToString(), [.. ocrPages.Select(p => p.PageNumber)], avgConfidence, correlationId));
+    }
+
+    /// <summary>UC-003 paso 9 — levanta <see cref="DocumentChunked"/>.</summary>
+    public void CompleteChunking(IReadOnlyList<DocumentChunk> chunks, string correlationId)
+    {
+        var version = RequireCurrentVersion();
+        version.MarkChunked();
+        Raise(new DocumentChunked(Guid.CreateVersion7(), DateTimeOffset.UtcNow, Id.ToString(), version.Id.ToString(), chunks.Count, [.. chunks.Select(c => c.Id.ToString())], correlationId));
+    }
+
+    /// <summary>F3/F6 (docs/14-reliability): clasificación/extracción/OCR/chunking falló — reintentable manualmente (vuelve a intentar desde <see cref="CompleteExtraction"/>).</summary>
+    public void MarkProcessingFailed(string reason) => RequireCurrentVersion().MarkProcessingFailed(RequireReason(reason));
+
+    private DocumentVersion RequireCurrentVersion() =>
+        CurrentVersion ?? throw new InvalidOperationException("El documento no tiene ninguna versión descargada todavía.");
+
     private static string RequireReason(string reason)
     {
         if (string.IsNullOrWhiteSpace(reason))

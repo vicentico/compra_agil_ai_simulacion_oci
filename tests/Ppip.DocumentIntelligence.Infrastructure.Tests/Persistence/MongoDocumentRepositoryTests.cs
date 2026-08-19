@@ -81,6 +81,47 @@ public sealed class MongoDocumentRepositoryTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task SaveThenFind_RoundTripsProcessingStateAndPages()
+    {
+        var document = NewDetected();
+        var version = DocumentVersion.Create(Sha256Hash.From(new string('a', 64)), StorageRef.From("chilecompra", "418-1191-COT26/original/bases.pdf"), 2048);
+        document.CompleteDownload(version, "corr-1");
+
+        var textualPage = DocumentPage.FromNativeText(1, "texto nativo de la página uno", 0.02);
+        var ocrPage = DocumentPage.FromNativeText(2, string.Empty, 0.0002);
+        ocrPage.ApplyOcr("texto reconocido por ocr", 0.83);
+        document.CompleteExtraction(DocumentClass.Mixed, [textualPage, ocrPage], "corr-2");
+
+        await _repository.SaveAsync(document);
+        var found = await _repository.FindAsync(document.Id);
+
+        var foundVersion = found!.CurrentVersion!;
+        Assert.Equal(DocumentProcessingStage.Extracted, foundVersion.ProcessingStage);
+        Assert.Equal(DocumentClass.Mixed, foundVersion.Classification);
+        Assert.Equal(2, foundVersion.Pages.Count);
+        var foundOcrPage = foundVersion.Pages.Single(p => p.PageNumber == 2);
+        Assert.Equal(ExtractionMethod.Ocr, foundOcrPage.ExtractionMethod);
+        Assert.Equal(0.83, foundOcrPage.OcrConfidence);
+        Assert.Equal("texto reconocido por ocr", foundOcrPage.Text);
+    }
+
+    [Fact]
+    public async Task SaveTwice_UpdatesProcessingStateOnSameVersion_WithoutDuplicatingIt()
+    {
+        var document = NewDetected();
+        var version = DocumentVersion.Create(Sha256Hash.From(new string('a', 64)), StorageRef.From("chilecompra", "x/v1.pdf"), 100);
+        document.CompleteDownload(version, "corr-1");
+        await _repository.SaveAsync(document);
+
+        document.CompleteExtraction(DocumentClass.Textual, [DocumentPage.FromNativeText(1, "texto", 0.02)], "corr-2");
+        await _repository.SaveAsync(document);
+
+        var found = await _repository.FindAsync(document.Id);
+        Assert.Single(found!.Versions);
+        Assert.Equal(DocumentProcessingStage.Extracted, found.Versions[0].ProcessingStage);
+    }
+
+    [Fact]
     public async Task UniqueIndex_RejectsDuplicateDocumentIdAndHash()
     {
         var documentId = Guid.NewGuid();

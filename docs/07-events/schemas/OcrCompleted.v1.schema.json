@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ppip.local/schemas/OcrCompleted.v1.schema.json",
+  "title": "OcrCompleted.v1",
+  "description": "docs/07-events/00-event-conventions.md catalogo. Solo se publica si al menos una pagina paso por OCR (FR-014). Productor: Ppip.DocumentIntelligence.Application.DocumentEventPublisher (FASE 8).",
+  "allOf": [
+    { "$ref": "envelope.schema.json" },
+    {
+      "type": "object",
+      "properties": {
+        "eventType": { "const": "OcrCompleted" },
+        "version": { "const": 1 },
+        "payload": {
+          "type": "object",
+          "required": ["documentId", "versionId", "pagesOcr", "avgConfidence"],
+          "properties": {
+            "documentId": { "type": "string", "minLength": 1 },
+            "versionId": { "type": "string", "minLength": 1 },
+            "pagesOcr": {
+              "type": "array",
+              "items": { "type": "integer", "minimum": 1 },
+              "minItems": 1
+            },
+            "avgConfidence": { "type": "number", "minimum": 0, "maximum": 1 }
+          },
+          "additionalProperties": false
+        }
+      }
+    }
+  ]
+}
