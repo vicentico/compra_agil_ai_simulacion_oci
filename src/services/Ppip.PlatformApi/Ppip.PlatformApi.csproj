@@ -7,5 +7,11 @@
     <ProjectReference Include="..\..\building-blocks\Ppip.BuildingBlocks.Health\Ppip.BuildingBlocks.Health.csproj" />
     <ProjectReference Include="..\..\building-blocks\Ppip.BuildingBlocks.Observability\Ppip.BuildingBlocks.Observability.csproj" />
     <ProjectReference Include="..\..\building-blocks\Ppip.BuildingBlocks.Security\Ppip.BuildingBlocks.Security.csproj" />
+    <!-- FASE 9: primer endpoint de negocio de PlatformApi (UC-005) — composition
+         root de los 3 módulos que RagQueryOrchestrator necesita resolver. -->
+    <ProjectReference Include="..\..\modules\procurement\Ppip.Procurement.Infrastructure\Ppip.Procurement.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\modules\documents\Ppip.DocumentIntelligence.Infrastructure\Ppip.DocumentIntelligence.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\modules\knowledge\Ppip.Knowledge.Application\Ppip.Knowledge.Application.csproj" />
+    <ProjectReference Include="..\..\modules\knowledge\Ppip.Knowledge.Infrastructure\Ppip.Knowledge.Infrastructure.csproj" />
   </ItemGroup>
 </Project>

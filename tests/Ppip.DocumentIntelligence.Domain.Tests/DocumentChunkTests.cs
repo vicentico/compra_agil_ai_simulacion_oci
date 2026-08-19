@@ -42,4 +42,35 @@ public class DocumentChunkTests
         Assert.Throws<ArgumentOutOfRangeException>(() =>
             DocumentChunk.Create(DocumentId.New(), Guid.CreateVersion7(), "418-1191-COT26", 1, null, null, ChunkType.Paragraph, "texto", 0));
     }
+
+    [Fact]
+    public void Create_HasNoEmbeddingId()
+    {
+        var chunk = DocumentChunk.Create(DocumentId.New(), Guid.CreateVersion7(), "418-1191-COT26", 1, null, null, ChunkType.Paragraph, "texto", 1);
+
+        Assert.Null(chunk.EmbeddingId);
+    }
+
+    [Fact]
+    public void MarkEmbedded_SetsEmbeddingId()
+    {
+        var chunk = DocumentChunk.Create(DocumentId.New(), Guid.CreateVersion7(), "418-1191-COT26", 1, null, null, ChunkType.Paragraph, "texto", 1);
+        var embeddingId = Guid.CreateVersion7();
+
+        chunk.MarkEmbedded(embeddingId);
+
+        Assert.Equal(embeddingId, chunk.EmbeddingId);
+    }
+
+    [Fact]
+    public void Rehydrate_PreservesEmbeddingId()
+    {
+        var embeddingId = Guid.CreateVersion7();
+
+        var chunk = DocumentChunk.Rehydrate(
+            Guid.CreateVersion7(), DocumentId.New(), Guid.CreateVersion7(), "418-1191-COT26", 1, null, null,
+            ChunkType.Paragraph, "texto", new string('a', 64), 1, embeddingId);
+
+        Assert.Equal(embeddingId, chunk.EmbeddingId);
+    }
 }

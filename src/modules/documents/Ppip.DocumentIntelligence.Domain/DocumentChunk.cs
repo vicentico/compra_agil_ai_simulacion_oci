@@ -22,6 +22,7 @@ public sealed class DocumentChunk : Entity<Guid>
     public string Text { get; }
     public string Hash { get; }
     public int TokenCount { get; }
+    public Guid? EmbeddingId { get; private set; }
 
     private DocumentChunk(
         Guid id,
@@ -91,6 +92,18 @@ public sealed class DocumentChunk : Entity<Guid>
         ChunkType chunkType,
         string text,
         string hash,
-        int tokenCount) =>
-        new(id, documentId, versionId, compraAgilId, page, section, subSection, chunkType, text, hash, tokenCount);
+        int tokenCount,
+        Guid? embeddingId = null)
+    {
+        var chunk = new DocumentChunk(id, documentId, versionId, compraAgilId, page, section, subSection, chunkType, text, hash, tokenCount);
+        chunk.EmbeddingId = embeddingId;
+        return chunk;
+    }
+
+    /// <summary>
+    /// FASE 9: vincula el chunk con el embedding generado (docs/09: etapa 10).
+    /// Idempotente por diseño — reindexar el mismo chunk reemplaza la referencia,
+    /// nunca falla (el pipeline de embedding puede reintentarse por batch parcial).
+    /// </summary>
+    public void MarkEmbedded(Guid embeddingId) => EmbeddingId = embeddingId;
 }

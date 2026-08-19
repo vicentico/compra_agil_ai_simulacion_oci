@@ -29,6 +29,18 @@ public sealed class MongoDocumentRepository : IDocumentRepository
         return record is null ? null : await ToDomainAsync(record, cancellationToken);
     }
 
+    public async Task<IReadOnlyList<Document>> FindByCompraAsync(string compraAgilId, CancellationToken cancellationToken = default)
+    {
+        var records = await _documents.Find(d => d.CompraAgilId == compraAgilId).ToListAsync(cancellationToken);
+        var result = new List<Document>();
+        foreach (var record in records)
+        {
+            result.Add(await ToDomainAsync(record, cancellationToken));
+        }
+
+        return result;
+    }
+
     public async Task SaveAsync(Document document, CancellationToken cancellationToken = default)
     {
         var id = document.Id.Value;

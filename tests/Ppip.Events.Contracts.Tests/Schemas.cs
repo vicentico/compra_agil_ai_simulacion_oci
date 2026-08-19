@@ -20,6 +20,7 @@ internal static class Schemas
     public static readonly JsonSchema DocumentExtractedV1 = Load("DocumentExtracted.v1.schema.json");
     public static readonly JsonSchema OcrCompletedV1 = Load("OcrCompleted.v1.schema.json");
     public static readonly JsonSchema DocumentChunkedV1 = Load("DocumentChunked.v1.schema.json");
+    public static readonly JsonSchema EmbeddingCreatedV1 = Load("EmbeddingCreated.v1.schema.json");
 
     private static JsonSchema Load(string fileName) =>
         JsonSchema.FromFile(Path.Combine(SchemasDir, fileName));

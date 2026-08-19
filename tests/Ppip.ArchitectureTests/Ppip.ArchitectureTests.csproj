@@ -11,5 +11,7 @@
     <ProjectReference Include="..\..\src\modules\procurement\Ppip.Procurement.Domain\Ppip.Procurement.Domain.csproj" />
     <ProjectReference Include="..\..\src\modules\documents\Ppip.DocumentIntelligence.Domain\Ppip.DocumentIntelligence.Domain.csproj" />
     <ProjectReference Include="..\..\src\modules\documents\Ppip.DocumentIntelligence.Application\Ppip.DocumentIntelligence.Application.csproj" />
+    <ProjectReference Include="..\..\src\modules\knowledge\Ppip.Knowledge.Domain\Ppip.Knowledge.Domain.csproj" />
+    <ProjectReference Include="..\..\src\modules\knowledge\Ppip.Knowledge.Application\Ppip.Knowledge.Application.csproj" />
   </ItemGroup>
 </Project>

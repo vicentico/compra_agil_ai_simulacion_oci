@@ -15,17 +15,14 @@ public static class ServiceCollectionExtensions
         builder.Services.AddOptions<MongoOptions>()
             .Bind(builder.Configuration.GetSection(MongoOptions.SectionName));
 
-        builder.Services.AddSingleton<IMongoDatabase>(sp =>
-        {
-            var options = sp.GetRequiredService<IOptions<MongoOptions>>().Value;
-            var client = new MongoClient(options.ConnectionString);
-            return client.GetDatabase(options.DocumentsDatabaseName);
-        });
+        builder.Services.AddSingleton<DocumentMongoDatabaseProvider>();
 
-        builder.Services.AddSingleton<IDocumentRepository, MongoDocumentRepository>();
-        builder.Services.AddSingleton<IDocumentChunkRepository, MongoDocumentChunkRepository>();
-        builder.Services.AddSingleton<IOutboxStore, MongoOutboxStore>();
+        builder.Services.AddSingleton<IDocumentRepository>(sp => new MongoDocumentRepository(Db(sp)));
+        builder.Services.AddSingleton<IDocumentChunkRepository>(sp => new MongoDocumentChunkRepository(Db(sp)));
+        builder.Services.AddSingleton<IOutboxStore>(sp => new MongoOutboxStore(Db(sp)));
 
         return builder;
     }
+
+    private static IMongoDatabase Db(IServiceProvider sp) => sp.GetRequiredService<DocumentMongoDatabaseProvider>().Database;
 }

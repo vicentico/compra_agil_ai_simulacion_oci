@@ -3,9 +3,11 @@ using NetArchTest.Rules;
 using Ppip.BuildingBlocks.Domain;
 using Ppip.BuildingBlocks.Messaging;
 using Ppip.DocumentIntelligence.Application;
+using Ppip.Knowledge.Application;
 using Ppip.Procurement.Domain;
 using Xunit;
 using DocumentAggregate = Ppip.DocumentIntelligence.Domain.Document;
+using KnowledgeAggregate = Ppip.Knowledge.Domain.Embedding;
 
 namespace Ppip.ArchitectureTests;
 
@@ -34,6 +36,7 @@ public class DomainIndependenceTests
         { "Ppip.BuildingBlocks.Messaging", typeof(OutboxMessage).Assembly },
         { "Ppip.Procurement.Domain", typeof(CompraAgil).Assembly },
         { "Ppip.DocumentIntelligence.Domain", typeof(DocumentAggregate).Assembly },
+        { "Ppip.Knowledge.Domain", typeof(KnowledgeAggregate).Assembly },
     };
 
     [Theory]
@@ -79,6 +82,23 @@ public class DomainIndependenceTests
             .GetResult();
 
         Assert.True(result.IsSuccessful, FailureMessage("Ppip.DocumentIntelligence.Application", result));
+    }
+
+    /// <summary>
+    /// Igual criterio que <see cref="DocumentApplication_DoesNotDependOnInfrastructure"/>:
+    /// Ppip.Knowledge.Application reusa deliberadamente Domain/Ports de otros
+    /// contextos (DocumentIntelligence, Procurement — ADR-012), pero nunca
+    /// Infrastructure de ningún módulo, ni siquiera el propio.
+    /// </summary>
+    [Fact]
+    public void KnowledgeApplication_DoesNotDependOnInfrastructure()
+    {
+        var result = Types.InAssembly(typeof(RagQueryOrchestrator).Assembly)
+            .Should()
+            .NotHaveDependencyOnAny("Ppip.Knowledge.Infrastructure", "Ppip.DocumentIntelligence.Infrastructure", "Ppip.Procurement.Infrastructure")
+            .GetResult();
+
+        Assert.True(result.IsSuccessful, FailureMessage("Ppip.Knowledge.Application", result));
     }
 
     private static string FailureMessage(string assemblyName, TestResult result) =>

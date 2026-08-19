@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ppip.local/schemas/EmbeddingCreated.v1.schema.json",
+  "title": "EmbeddingCreated.v1",
+  "description": "docs/07-events/00-event-conventions.md catalogo. Productor: Ppip.Knowledge.Application.KnowledgeEventPublisher (FASE 9).",
+  "allOf": [
+    { "$ref": "envelope.schema.json" },
+    {
+      "type": "object",
+      "properties": {
+        "eventType": { "const": "EmbeddingCreated" },
+        "version": { "const": 1 },
+        "payload": {
+          "type": "object",
+          "required": ["documentId", "versionId", "modelVersion", "indexedCount", "isLastOfCompra"],
+          "properties": {
+            "documentId": { "type": "string", "minLength": 1 },
+            "versionId": { "type": "string", "minLength": 1 },
+            "modelVersion": { "type": "string", "minLength": 1 },
+            "indexedCount": { "type": "integer", "minimum": 0 },
+            "isLastOfCompra": { "type": "boolean" }
+          },
+          "additionalProperties": false
+        }
+      }
+    }
+  ]
+}

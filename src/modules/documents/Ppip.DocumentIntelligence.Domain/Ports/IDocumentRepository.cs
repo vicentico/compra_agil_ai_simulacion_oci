@@ -8,5 +8,8 @@ public interface IDocumentRepository
     /// <summary>Búsqueda por identidad natural (compraAgilId + sourceUrl) — evita crear un <see cref="Document"/> duplicado para el mismo adjunto en un reintento del sync.</summary>
     Task<Document?> FindByCompraAndUrlAsync(string compraAgilId, string sourceUrl, CancellationToken cancellationToken = default);
 
+    /// <summary>FASE 9: todos los documentos de una compra — usado para determinar <c>isLastOfCompra</c> al publicar <c>EmbeddingCreated.v1</c>.</summary>
+    Task<IReadOnlyList<Document>> FindByCompraAsync(string compraAgilId, CancellationToken cancellationToken = default);
+
     Task SaveAsync(Document document, CancellationToken cancellationToken = default);
 }

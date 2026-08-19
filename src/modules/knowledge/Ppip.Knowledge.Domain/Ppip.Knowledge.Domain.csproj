@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>Ppip.Knowledge.Domain</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\building-blocks\Ppip.BuildingBlocks.Domain\Ppip.BuildingBlocks.Domain.csproj" />
+  </ItemGroup>
+  <!-- Sin más PackageReference/ProjectReference a propósito (NFR-013, mismo
+       criterio que los demás módulos): el dominio de Knowledge/RAG no
+       conoce Qdrant/Ollama/HTTP. -->
+</Project>

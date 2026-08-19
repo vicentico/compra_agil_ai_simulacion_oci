@@ -216,6 +216,8 @@ services:
       Ppip__RabbitMq__Password: ${RABBITMQ_PASSWORD}
       Ppip__MinIo__Endpoint: http://minio:9000
       Ppip__Qdrant__Endpoint: http://qdrant:6333
+      Ppip__Qdrant__ApiKey: ${QDRANT_API_KEY}
+      Ppip__Ollama__Endpoint: http://ollama:11434
       Ppip__Cors__AllowedOrigins: ${CORS_ALLOWED_ORIGINS}
       Ppip__Otel__Endpoint: http://otel-collector:4317
       # Authority: DNS interno del contenedor Keycloak, usado para descubrir
@@ -286,6 +288,8 @@ services:
       Ppip__MinIo__AccessKey: ${MINIO_ROOT_USER}
       Ppip__MinIo__SecretKey: ${MINIO_ROOT_PASSWORD}
       Ppip__Qdrant__Endpoint: http://qdrant:6333
+      Ppip__Qdrant__ApiKey: ${QDRANT_API_KEY}
+      Ppip__Ollama__Endpoint: http://ollama:11434
       Ppip__Otel__Endpoint: http://otel-collector:4317
     networks: [app, data]
     depends_on:
@@ -311,6 +315,7 @@ services:
       Ppip__RabbitMq__Username: ${RABBITMQ_USER}
       Ppip__RabbitMq__Password: ${RABBITMQ_PASSWORD}
       Ppip__Qdrant__Endpoint: http://qdrant:6333
+      Ppip__Qdrant__ApiKey: ${QDRANT_API_KEY}
       Ppip__Ollama__Endpoint: http://ollama:11434
       Ppip__Otel__Endpoint: http://otel-collector:4317
     networks: [app, data]

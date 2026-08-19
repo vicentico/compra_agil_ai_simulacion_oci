@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.*" />
+    <PackageReference Include="Microsoft.Extensions.Options" Version="10.*" />
+    <PackageReference Include="Testcontainers.MongoDb" Version="4.*" />
+    <PackageReference Include="Testcontainers.Qdrant" Version="4.*" />
+    <PackageReference Include="xunit" Version="2.*" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.*" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\modules\knowledge\Ppip.Knowledge.Infrastructure\Ppip.Knowledge.Infrastructure.csproj" />
+  </ItemGroup>
+</Project>

@@ -1,21 +1,27 @@
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Microsoft.Extensions.Options;
 using Ppip.BuildingBlocks.Health;
 using Ppip.BuildingBlocks.Observability;
 using Ppip.BuildingBlocks.Security;
+using Ppip.DocumentIntelligence.Infrastructure.Persistence;
+using Ppip.Knowledge.Application;
+using Ppip.Knowledge.Application.Exceptions;
+using Ppip.Knowledge.Domain.Exceptions;
+using Ppip.Knowledge.Infrastructure;
+using Ppip.Procurement.Infrastructure.Persistence;
 
 // ============================================================================
 // Ppip.PlatformApi — esqueleto FASE 1 (Docker infrastructure) + observabilidad
-// FASE 2 (OTel, correlationId) + identidad/seguridad FASE 3 (JWT+RBAC).
+// FASE 2 (OTel, correlationId) + identidad/seguridad FASE 3 (JWT+RBAC) +
+// primer endpoint de negocio real, UC-005 Consultar RAG (FASE 9).
 //
-// Módulos de dominio (Procurement, Document, Knowledge/RAG, Proposal,
-// Compliance, Audit) se incorporan a partir de FASE 4 según docs/ROADMAP.md
-// y docs/03-domain/. Este Program.cs solo demuestra que la topología de red
-// y las credenciales de infraestructura están correctamente cableadas
-// (criterio de éxito de FASE 1), que traces/métricas/logs/correlationId
-// fluyen end-to-end entre servicios (criterio de éxito de FASE 2) y que el
-// RBAC de 5 roles funciona con tokens reales de Keycloak (criterio de éxito
-// de FASE 3, ver tests/Ppip.PlatformApi.Tests).
+// El resto de módulos de dominio (Procurement/Document más allá de lo que
+// UC-005 necesita, Proposal, Compliance, Audit) siguen sin exponerse acá —
+// hasta FASE 8 este Program.cs era deliberadamente un esqueleto (topología +
+// observabilidad + RBAC, ver notas de cierre de FASE 1-3); UC-005 es el
+// primer caso de uso de lectura completo, y por eso el primero que amerita
+// componer los módulos de dominio en este proceso.
 // ============================================================================
 
 var builder = WebApplication.CreateBuilder(args);
@@ -32,6 +38,15 @@ var minioEndpoint = config["Ppip:MinIo:Endpoint"] ?? string.Empty;
 var qdrantEndpoint = config["Ppip:Qdrant:Endpoint"] ?? string.Empty;
 var allowedOrigins = (config["Ppip:Cors:AllowedOrigins"] ?? string.Empty)
     .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+builder.AddProcurementPersistence();
+builder.AddDocumentPersistence();
+builder.AddKnowledgeEmbeddings();
+builder.AddKnowledgeLlm();
+builder.AddKnowledgeVectorIndex();
+builder.AddKnowledgePersistence();
+builder.Services.AddOptions<RagQueryOptions>().Bind(config.GetSection(RagQueryOptions.SectionName));
+builder.Services.AddSingleton<RagQueryOrchestrator>();
 
 builder.Services.AddHttpClient();
 
@@ -151,7 +166,71 @@ app.MapGet("/api/diagnostics/trace-check", async (
     });
 }).RequireAuthorization(PpipRoles.Analyst);
 
+// UC-005 (Consultar RAG, FASE 9) — primer endpoint de negocio de PlatformApi.
+// compraId lo inyecta el servidor desde la ruta: NUNCA se toma del body
+// (ADR-008, docs/06-api/01-example-rag-query.md). Rol mínimo "viewer" —
+// cualquier usuario autenticado puede consultar.
+app.MapPost("/api/rag/{compraId}/query", async (
+    string compraId,
+    RagQueryApiRequest request,
+    RagQueryOrchestrator orchestrator,
+    IOptions<RagQueryOptions> options,
+    HttpContext context,
+    CancellationToken cancellationToken) =>
+{
+    var correlationId = context.Items[CorrelationIdMiddleware.HeaderName] as string ?? Guid.CreateVersion7().ToString();
+    var topK = request.TopK ?? options.Value.DefaultTopK;
+
+    try
+    {
+        var query = new RagQueryRequest(compraId, request.Question ?? string.Empty, topK);
+        var result = await orchestrator.QueryAsync(query, correlationId, cancellationToken);
+
+        return Results.Ok(new
+        {
+            answer = result.Answer,
+            answerType = result.AnswerType.ToString().ToUpperInvariant(),
+            evidence = result.Evidence.Select(e => new
+            {
+                documentId = e.DocumentId,
+                documentVersion = e.DocumentVersion,
+                documentName = e.DocumentName,
+                page = e.Page,
+                chunkId = e.ChunkId,
+                sourceText = e.SourceText,
+                score = e.Score,
+                confidence = e.Confidence,
+            }),
+            unanswered = result.Unanswered,
+            execution = result.Execution is null ? null : new
+            {
+                model = result.Execution.Model,
+                promptVersion = result.Execution.PromptVersion,
+                tokensIn = result.Execution.TokensIn,
+                tokensOut = result.Execution.TokensOut,
+                latencyMs = result.Execution.LatencyMs,
+            },
+            correlationId = result.CorrelationId,
+        });
+    }
+    catch (ArgumentException ex)
+    {
+        return Results.Problem(detail: ex.Message, statusCode: StatusCodes.Status400BadRequest, title: "Solicitud inválida");
+    }
+    catch (CompraNotFoundException ex)
+    {
+        return Results.Problem(detail: ex.Message, statusCode: StatusCodes.Status404NotFound, title: "Compra Ágil no encontrada");
+    }
+    catch (RetrievalUnavailableException ex)
+    {
+        // UC-005 A2: error explícito, detail identifica la dependencia caída (docs/06-api/01).
+        return Results.Problem(detail: $"qdrant: {ex.Message}", statusCode: StatusCodes.Status503ServiceUnavailable, title: "Búsqueda vectorial no disponible");
+    }
+}).RequireAuthorization(PpipRoles.Viewer);
+
 app.Run();
+
+internal sealed record RagQueryApiRequest(string? Question, int? TopK);
 
 // WebApplicationFactory<Program> (tests/Ppip.PlatformApi.Tests) necesita que
 // la clase Program generada implícitamente por top-level statements sea

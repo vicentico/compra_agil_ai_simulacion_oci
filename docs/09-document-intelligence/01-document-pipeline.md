@@ -32,11 +32,11 @@ Prioridad de cortes: títulos/numeración de secciones → subsecciones → pár
 
 Puerto `IOcrService` (ADR-006): `RecognizeAsync(pageImage) → {text, confidence, words[]?}`. Implementaciones: LocalOcrService (Tesseract, spa+eng), MockOcrService (fixtures determinísticos), CloudOcrService (futuro, OCI Document Understanding). Confianza < umbral → flag low_confidence visible en UI y penalización de confidence en evidencia derivada.
 
-## Estado de implementación (FASE 7-8, 2026-08-19)
+## Estado de implementación (FASE 7-8, 2026-08-19; etapas 10-11 en FASE 9, mismo día)
 
-**Etapas 1-9 implementadas** (`src/modules/documents/Ppip.DocumentIntelligence.*`, ver docs/03-domain/02-domain-model.md y docs/ROADMAP.md notas de cierre de FASE 7-8). Diferencias reales vs. lo especificado aquí, encontradas construyendo/probando contra binarios reales:
+**Etapas 1-11 implementadas** (`src/modules/documents/Ppip.DocumentIntelligence.*` etapas 1-9, `src/modules/knowledge/Ppip.Knowledge.*` etapas 10-11, ver docs/03-domain/02-domain-model.md, docs/10-rag/01-rag-specification.md y docs/ROADMAP.md notas de cierre de FASE 7-9). Diferencias reales vs. lo especificado aquí, encontradas construyendo/probando contra binarios reales:
 
-- **Etapas 10-11 (Embedding/Indexing) no están en esta implementación** — quedan en FASE 9 (RAG), que además cierra OQ-03 (modelo de embeddings).
+- **Etapas 10-11 (Embedding/Indexing):** implementadas en FASE 9 — `EmbeddingIndexer` (Ppip.Knowledge.Application), `QdrantVectorIndex` (validado contra Qdrant real vía Testcontainers), `MockEmbeddingProvider`/`OllamaEmbeddingProvider`. Ver docs/10-rag/01-rag-specification.md "Estado de implementación" para el detalle completo (OQ-03 cerrada: nomic-embed-text/768).
 - **"Cada etapa: consumidor RabbitMQ propio"** todavía no es así — no existe ningún consumidor de eventos real en el sistema (ni aquí ni en Procurement). El pipeline completo (descarga→...→chunking) corre síncrono dentro de un único orquestador por HTTP interno (`/internal/documents/download`, `/internal/documents/{id}/process`), no como etapas desacopladas por evento. `IIdempotencyStore` (definido desde FASE 4) sigue sin adaptador real por la misma razón.
 - **Etapa 7 (Image/Table processing) solo parcial:** se detecta *que* una página tiene layout de tabla o imágenes embebidas (heurística de posición de palabras / extracción PNG de PdfPig), pero no se construye una representación estructurada de filas/celdas — FR-015 es SHOULD, se difirió deliberadamente el resto.
 - **`IPdfExtractor.EmbeddedImages`** son imágenes rasterizadas ya embebidas en la página (vía PdfPig), no una renderización del contenido completo de la página — cubre el caso típico de un PDF escaneado (la imagen embebida ES la página), pero no rasteriza contenido vectorial/texto.

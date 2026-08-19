@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>Ppip.Knowledge.Infrastructure</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="MongoDB.Driver" Version="3.*" />
+    <PackageReference Include="Microsoft.Extensions.Http" Version="10.*" />
+    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="10.*" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Ppip.Knowledge.Domain\Ppip.Knowledge.Domain.csproj" />
+  </ItemGroup>
+  <!-- Sin Qdrant.Client ni SDK de Ollama: ambos son APIs REST simples
+       (docs/10-rag/01) — se llaman directamente vía HttpClient + System.Text.Json,
+       igual de real que un cliente generado pero sin dependencia extra. -->
+</Project>

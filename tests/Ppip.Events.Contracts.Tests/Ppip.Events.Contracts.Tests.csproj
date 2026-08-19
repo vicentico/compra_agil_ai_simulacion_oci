@@ -18,5 +18,8 @@
     <!-- FASE 8: idem para el productor de Document Intelligence — ver
          DocumentEventSerializationTests.cs. -->
     <ProjectReference Include="..\..\src\modules\documents\Ppip.DocumentIntelligence.Application\Ppip.DocumentIntelligence.Application.csproj" />
+    <!-- FASE 9: idem para el productor de Knowledge/RAG — ver
+         KnowledgeEventSerializationTests.cs. -->
+    <ProjectReference Include="..\..\src\modules\knowledge\Ppip.Knowledge.Application\Ppip.Knowledge.Application.csproj" />
   </ItemGroup>
 </Project>

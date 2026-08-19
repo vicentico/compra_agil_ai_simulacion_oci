@@ -16,20 +16,17 @@ public static class ServiceCollectionExtensions
         builder.Services.AddOptions<MongoOptions>()
             .Bind(builder.Configuration.GetSection(MongoOptions.SectionName));
 
-        builder.Services.AddSingleton<IMongoDatabase>(sp =>
-        {
-            var options = sp.GetRequiredService<IOptions<MongoOptions>>().Value;
-            var client = new MongoClient(options.ConnectionString);
-            return client.GetDatabase(options.DatabaseName);
-        });
+        builder.Services.AddSingleton<ProcurementMongoDatabaseProvider>();
 
-        builder.Services.AddSingleton<ICompraAgilRepository, MongoCompraAgilRepository>();
-        builder.Services.AddSingleton<IInstitutionRepository, MongoInstitutionRepository>();
-        builder.Services.AddSingleton<ISyncCheckpointRepository, MongoSyncCheckpointRepository>();
-        builder.Services.AddSingleton<ISyncExecutionRepository, MongoSyncExecutionRepository>();
-        builder.Services.AddSingleton<IRawPayloadRepository, MongoRawPayloadRepository>();
-        builder.Services.AddSingleton<IOutboxStore, MongoOutboxStore>();
+        builder.Services.AddSingleton<ICompraAgilRepository>(sp => new MongoCompraAgilRepository(Db(sp)));
+        builder.Services.AddSingleton<IInstitutionRepository>(sp => new MongoInstitutionRepository(Db(sp)));
+        builder.Services.AddSingleton<ISyncCheckpointRepository>(sp => new MongoSyncCheckpointRepository(Db(sp)));
+        builder.Services.AddSingleton<ISyncExecutionRepository>(sp => new MongoSyncExecutionRepository(Db(sp)));
+        builder.Services.AddSingleton<IRawPayloadRepository>(sp => new MongoRawPayloadRepository(Db(sp)));
+        builder.Services.AddSingleton<IOutboxStore>(sp => new MongoOutboxStore(Db(sp)));
 
         return builder;
     }
+
+    private static IMongoDatabase Db(IServiceProvider sp) => sp.GetRequiredService<ProcurementMongoDatabaseProvider>().Database;
 }

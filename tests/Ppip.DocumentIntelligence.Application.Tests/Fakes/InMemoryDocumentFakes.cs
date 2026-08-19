@@ -36,6 +36,9 @@ public sealed class InMemoryDocumentRepository : IDocumentRepository
     public Task<Document?> FindByCompraAndUrlAsync(string compraAgilId, string sourceUrl, CancellationToken cancellationToken = default) =>
         Task.FromResult(_byId.Values.FirstOrDefault(d => d.CompraAgilId == compraAgilId && d.SourceUrl == sourceUrl));
 
+    public Task<IReadOnlyList<Document>> FindByCompraAsync(string compraAgilId, CancellationToken cancellationToken = default) =>
+        Task.FromResult<IReadOnlyList<Document>>([.. _byId.Values.Where(d => d.CompraAgilId == compraAgilId)]);
+
     public Task SaveAsync(Document document, CancellationToken cancellationToken = default)
     {
         SaveCount++;
@@ -109,6 +112,15 @@ public sealed class InMemoryDocumentChunkRepository : IDocumentChunkRepository
 
     public Task<IReadOnlyList<DocumentChunk>> FindByVersionAsync(Guid versionId, CancellationToken cancellationToken = default) =>
         Task.FromResult<IReadOnlyList<DocumentChunk>>([.. Chunks.Where(c => c.VersionId == versionId).OrderBy(c => c.Page)]);
+
+    public Task<IReadOnlyList<DocumentChunk>> FindByIdsAsync(IReadOnlyList<Guid> chunkIds, CancellationToken cancellationToken = default) =>
+        Task.FromResult<IReadOnlyList<DocumentChunk>>([.. Chunks.Where(c => chunkIds.Contains(c.Id))]);
+
+    public Task MarkEmbeddedAsync(Guid chunkId, Guid embeddingId, CancellationToken cancellationToken = default)
+    {
+        Chunks.Single(c => c.Id == chunkId).MarkEmbedded(embeddingId);
+        return Task.CompletedTask;
+    }
 }
 
 public sealed class FakeMalwareScanner : IMalwareScanner

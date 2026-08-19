@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>Ppip.Knowledge.Application</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.*" />
+    <PackageReference Include="Microsoft.Extensions.Options" Version="10.*" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\building-blocks\Ppip.BuildingBlocks.Messaging\Ppip.BuildingBlocks.Messaging.csproj" />
+    <ProjectReference Include="..\Ppip.Knowledge.Domain\Ppip.Knowledge.Domain.csproj" />
+    <!-- Reuso deliberado entre contextos acotados (ver docs/03-domain, ADR-012
+         "Revisión de boundaries al cierre de FASE 10/15/18"): Knowledge
+         necesita el texto de los chunks tras la búsqueda vectorial (el
+         payload de Qdrant no lo incluye, docs/08-data) y necesita saber si
+         la Compra Ágil existe (UC-005 precondición). En vez de duplicar esos
+         datos, se referencian directamente los puertos/entidades de dominio
+         de los contextos dueños. -->
+    <ProjectReference Include="..\..\documents\Ppip.DocumentIntelligence.Domain\Ppip.DocumentIntelligence.Domain.csproj" />
+    <ProjectReference Include="..\..\procurement\Ppip.Procurement.Domain\Ppip.Procurement.Domain.csproj" />
+  </ItemGroup>
+  <!-- Igual que Ppip.DocumentIntelligence.Application: NO referencia
+       Infrastructure. Todos los puertos (IEmbeddingProvider, IVectorIndex,
+       ILlmProvider, IEmbeddingRepository, IAIExecutionRepository) viven en
+       Ppip.Knowledge.Domain/Ports. Reforzado por architecture tests. -->
+</Project>

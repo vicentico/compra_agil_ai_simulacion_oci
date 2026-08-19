@@ -34,6 +34,7 @@ public sealed class MongoDocumentChunkRepository : IDocumentChunkRepository
             Text = c.Text,
             Hash = c.Hash,
             TokenCount = c.TokenCount,
+            EmbeddingId = c.EmbeddingId,
         }).ToList();
 
         await _collection.InsertManyAsync(records, cancellationToken: cancellationToken);
@@ -42,19 +43,39 @@ public sealed class MongoDocumentChunkRepository : IDocumentChunkRepository
     public async Task<IReadOnlyList<DocumentChunk>> FindByVersionAsync(Guid versionId, CancellationToken cancellationToken = default)
     {
         var records = await _collection.Find(c => c.VersionId == versionId).SortBy(c => c.Page).ToListAsync(cancellationToken);
-        return [.. records.Select(r => DocumentChunk.Rehydrate(
-            r.Id,
-            DocumentId.From(r.DocumentId),
-            r.VersionId,
-            r.CompraAgilId,
-            r.Page,
-            r.Section,
-            r.SubSection,
-            Enum.Parse<ChunkType>(r.ChunkType),
-            r.Text,
-            r.Hash,
-            r.TokenCount))];
+        return [.. records.Select(ToDomain)];
     }
+
+    public async Task<IReadOnlyList<DocumentChunk>> FindByIdsAsync(IReadOnlyList<Guid> chunkIds, CancellationToken cancellationToken = default)
+    {
+        if (chunkIds.Count == 0)
+        {
+            return [];
+        }
+
+        var records = await _collection.Find(Builders<DocumentChunkRecord>.Filter.In(c => c.Id, chunkIds)).ToListAsync(cancellationToken);
+        return [.. records.Select(ToDomain)];
+    }
+
+    public Task MarkEmbeddedAsync(Guid chunkId, Guid embeddingId, CancellationToken cancellationToken = default) =>
+        _collection.UpdateOneAsync(
+            c => c.Id == chunkId,
+            Builders<DocumentChunkRecord>.Update.Set(c => c.EmbeddingId, embeddingId),
+            cancellationToken: cancellationToken);
+
+    private static DocumentChunk ToDomain(DocumentChunkRecord r) => DocumentChunk.Rehydrate(
+        r.Id,
+        DocumentId.From(r.DocumentId),
+        r.VersionId,
+        r.CompraAgilId,
+        r.Page,
+        r.Section,
+        r.SubSection,
+        Enum.Parse<ChunkType>(r.ChunkType),
+        r.Text,
+        r.Hash,
+        r.TokenCount,
+        r.EmbeddingId);
 
     public static async Task EnsureIndexesAsync(IMongoDatabase database, CancellationToken cancellationToken = default)
     {
@@ -90,5 +111,8 @@ public sealed class MongoDocumentChunkRepository : IDocumentChunkRepository
         public string Hash { get; set; } = string.Empty;
 
         public int TokenCount { get; set; }
+
+        [BsonGuidRepresentation(GuidRepresentation.Standard)]
+        public Guid? EmbeddingId { get; set; }
     }
 }
